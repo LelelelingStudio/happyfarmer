@@ -1,3 +1,6 @@
-/.DS_Store
+**/.DS_Store
+.Thumbs.db
 /CNAME
 /surge-parallel.sh
+/*.zip
+*.log
