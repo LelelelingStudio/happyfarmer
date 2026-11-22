@@ -4,6 +4,8 @@ A calm, slow-paced farm management game built as a pure static web app. English 
 
 **Version:** 1.1.0  
 **Age rating:** 6+ / 6岁以上  
+**itch.io:** https://lelelelingstudio.itch.io/happy-farmer (assumed slug)
+
 **Runtime:** modern browsers, no build step, no backend required for the core game
 
 ## About the game

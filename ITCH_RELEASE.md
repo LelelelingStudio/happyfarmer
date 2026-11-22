@@ -21,15 +21,19 @@ Excluded:
 - Start screen requires an explicit checkbox before New Game, Continue or Import.
 - Consent is version-bound (`farm_legal_consent_v1_1_0`) and persisted in localStorage.
 
-Three public legal pages are in the package. After upload, replace `<ITCH_GAME_URL>` with the real itch.io game URL:
+Your itch.io account page is `https://lelelelingstudio.itch.io`. The game slug is assumed to be `happy-farmer`:
+
+**Game page:** `https://lelelelingstudio.itch.io/happy-farmer`
+
+Three public legal pages ship in the ZIP. After publishing, open the game and copy the iframe `src` from the page source. For HTML5 ZIP uploads it is normally `https://html-classic.itch.zone/html/<ID>/index.html`; replace `index.html` with `legal.html` to get the three direct links:
 
 | Document | URL |
 |---|---|
-| User Agreement (EULA, gameplay guide merged in) | `<ITCH_GAME_URL>/file/legal.html?doc=1` |
-| Privacy Policy | `<ITCH_GAME_URL>/file/legal.html?doc=2` |
-| Terms of Service | `<ITCH_GAME_URL>/file/legal.html?doc=3` |
+| User Agreement (EULA, gameplay guide merged in) | `https://html-classic.itch.zone/html/<ID>/legal.html?doc=1` |
+| Privacy Policy | `https://html-classic.itch.zone/html/<ID>/legal.html?doc=2` |
+| Terms of Service | `https://html-classic.itch.zone/html/<ID>/legal.html?doc=3` |
 
-itch.io may serve HTML5 files from `https://html-classic.itch.zone/html/<id>/...` instead; use whichever public direct URL itch.io reports for `legal.html`. All three open without login and support `&lang=zh` for Chinese.
+If itch.io exposes the files under your own subdomain instead, use `https://lelelelingstudio.itch.io/happy-farmer/file/legal.html?doc=1/2/3`. Use whichever public direct URL itch.io actually reports for `legal.html`. All three open without login and support `&lang=zh` for Chinese. If you choose a different slug, replace `happy-farmer` everywhere and tell me so I can update the repository.
 
 The original in-game gameplay guide has been merged into the EULA. The lelele Game Rules page (`https://game.leleleling.site/game_rules.html`) was used as the compliance checklist only and is deliberately not shown inside the game.
 
@@ -95,7 +99,8 @@ Local static server: `python3 -m http.server 8765` at the project root. Browser:
 
 ## 7. Before you click Publish
 
-- [ ] Replace `<ITCH_GAME_URL>` in section 2 with the real public URLs and add them to the itch.io page description.
+- [ ] Confirm the game slug `happy-farmer`; if different, update section 2 and tell me to sync the repo.
+- [ ] Fill `<ID>` in the three legal URLs after upload and add them to the itch.io page description.
 - [ ] Set the itch.io content rating / maturity flag to "Everyone 6+" or equivalent.
 - [ ] Verify the leaderboard CORS from the actual itch.io origin. Failure is non-fatal: the game stays playable.
 - [ ] Confirm the three legal links are reachable from a logged-out browser.
