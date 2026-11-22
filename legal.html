@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Legal documents for Happy Farmer">
+    <title>Legal Documents · Happy Farmer</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%B1%3C/text%3E%3C/svg%3E">
+    <link rel="stylesheet" href="css/legal.css?v=1.1.0">
+</head>
+<body>
+<div class="legal-page">
+    <header class="legal-header">
+        <div class="brand">
+            <span class="brand-mark" aria-hidden="true">🌱</span>
+            <div>
+                <p class="brand-kicker">Lelelegame</p>
+                <h1 id="brand-title">Happy Farmer</h1>
+            </div>
+        </div>
+        <div class="legal-header-actions">
+            <span class="age-badge" id="age-badge">Ages 6+</span>
+            <div class="lang-switch" role="group" aria-label="Language">
+                <button type="button" id="lang-en" class="lang-btn">EN</button>
+                <button type="button" id="lang-zh" class="lang-btn">中文</button>
+            </div>
+        </div>
+    </header>
+
+    <nav class="legal-nav" aria-label="Legal documents">
+        <a href="legal.html?doc=1" data-doc="1" class="legal-nav-link">User Agreement</a>
+        <a href="legal.html?doc=2" data-doc="2" class="legal-nav-link">Privacy Policy</a>
+        <a href="legal.html?doc=3" data-doc="3" class="legal-nav-link">Terms of Service</a>
+    </nav>
+
+    <main class="legal-main">
+        <article class="doc-card" aria-labelledby="doc-title">
+            <div class="doc-meta">
+                <span id="doc-version">v1.1.0</span>
+                <span class="dot" aria-hidden="true">·</span>
+                <span id="doc-updated">2026-11-22</span>
+            </div>
+            <h2 id="doc-title">User Agreement</h2>
+            <div id="doc-content" class="doc-content"></div>
+        </article>
+    </main>
+
+    <footer class="legal-footer">
+        <span id="footer-publisher">Published by leleleling Studio · Lelelegame</span>
+    </footer>
+</div>
+
+<script src="langdata/constants.js?v=1.1.0"></script>
+<script src="langdata/ch/ui-ch.js?v=1.1.0"></script>
+<script src="langdata/en/ui-en.js?v=1.1.0"></script>
+<script src="langdata/ch/messages-ch.js?v=1.1.0"></script>
+<script src="langdata/en/messages-en.js?v=1.1.0"></script>
+<script src="langdata/ch/documents-ch.js?v=1.1.0"></script>
+<script src="langdata/en/documents-en.js?v=1.1.0"></script>
+<script src="js/ui/settingsUI.js?v=1.1.0"></script>
+<script>
+(function () {
+    const DOC_KEYS = Object.freeze({ 1: 'eula', 2: 'privacy', 3: 'terms' });
+    const params = new URLSearchParams(window.location.search);
+    const rawDoc = params.get('doc');
+    const docId = Object.prototype.hasOwnProperty.call(DOC_KEYS, rawDoc) ? rawDoc : '1';
+    const lang = params.get('lang') === 'zh' ? 'zh' : 'en';
+
+    const packs = { zh: DOCUMENTS_CH, en: DOCUMENTS_EN };
+    const uiPacks = { zh: LANG_CH, en: LANG_EN };
+
+    function tr(path, fallback) {
+        const pack = uiPacks[lang] || {};
+        const value = String(path).split('.').reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : undefined), pack);
+        return typeof value === 'string' && value ? value : fallback;
+    }
+
+    function setLang(next) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('doc', docId);
+        url.searchParams.set('lang', next);
+        window.location.href = url.toString();
+    }
+
+    function render() {
+        document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+        const pack = packs[lang] || packs.en;
+        const key = DOC_KEYS[docId];
+        const doc = pack && pack[key];
+
+        document.getElementById('brand-title').textContent = tr('app.title', lang === 'zh' ? '爱种地的农民' : 'Happy Farmer');
+        document.getElementById('age-badge').textContent = lang === 'zh' ? '适龄 6+' : 'Ages 6+';
+        document.getElementById('footer-publisher').textContent = lang === 'zh'
+            ? '出品：了了了岭工作室 · 了了了游'
+            : 'Published by leleleling Studio · Lelelegame';
+
+        document.querySelectorAll('.legal-nav-link').forEach((link) => {
+            const id = link.dataset.doc;
+            const labelKey = id === '1' ? 'legal.eula' : (id === '2' ? 'legal.privacy' : 'legal.terms');
+            link.textContent = tr(labelKey, link.textContent);
+            link.href = 'legal.html?doc=' + id + '&lang=' + lang;
+            if (id === docId) {
+                link.classList.add('active');
+                link.setAttribute('aria-current', 'page');
+            } else {
+                link.classList.remove('active');
+                link.removeAttribute('aria-current');
+            }
+        });
+
+        const btnEn = document.getElementById('lang-en');
+        const btnZh = document.getElementById('lang-zh');
+        btnEn.classList.toggle('active', lang === 'en');
+        btnZh.classList.toggle('active', lang === 'zh');
+        btnEn.setAttribute('aria-pressed', lang === 'en' ? 'true' : 'false');
+        btnZh.setAttribute('aria-pressed', lang === 'zh' ? 'true' : 'false');
+
+        const titleEl = document.getElementById('doc-title');
+        const contentEl = document.getElementById('doc-content');
+        const versionEl = document.getElementById('doc-version');
+        const updatedEl = document.getElementById('doc-updated');
+
+        if (!doc) {
+            titleEl.textContent = tr('legal.docNotFound', 'Document unavailable');
+            contentEl.textContent = '';
+            document.title = titleEl.textContent + ' · Happy Farmer';
+            return;
+        }
+
+        titleEl.textContent = doc.title;
+        versionEl.textContent = 'v' + (doc.version || '1.1.0');
+        updatedEl.textContent = doc.updated || '2026-11-22';
+        contentEl.innerHTML = (typeof markdownToHtml === 'function')
+            ? markdownToHtml(doc.content)
+            : '<pre>' + String(doc.content).replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</pre>';
+        document.title = doc.title + ' · Happy Farmer';
+    }
+
+    document.getElementById('lang-en').addEventListener('click', () => setLang('en'));
+    document.getElementById('lang-zh').addEventListener('click', () => setLang('zh'));
+    render();
+})();
+</script>
+</body>
+</html>
