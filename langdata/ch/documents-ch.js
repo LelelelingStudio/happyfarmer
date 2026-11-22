@@ -139,7 +139,7 @@ const DOCUMENTS_CH = {
 ## 5. 第三方服务
 
 - **排行榜服务器**：Cloudflare Workers + Cloudflare D1，仅用于展示排行榜。
-- **静态托管**：itch.io、Surge 或开发者自有的静态站点。
+- **静态托管**：GitHub Pages、Surge 或开发者自有的静态站点。
 - 本游戏**不包含**任何广告 SDK、统计分析 SDK、社交登录或第三方反馈脚本。
 
 ## 6. 音频

@@ -139,7 +139,7 @@ If you enable the next-day reminder, the game asks for notification permission. 
 ## 5. Third Parties
 
 - **Leaderboard server**: Cloudflare Workers and Cloudflare D1, used only to display the board.
-- **Static hosting**: itch.io, Surge, or the developer's own static site.
+- **Static hosting**: GitHub Pages, Surge, or the developer's own static site.
 - This game contains **no ad SDKs, analytics SDKs, social login, or third-party feedback scripts**.
 
 ## 6. Audio

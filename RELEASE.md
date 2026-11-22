@@ -1,10 +1,10 @@
-# Happy Farmer v1.1.0 — itch.io release checklist
+# Happy Farmer v1.1.0 — release checklist
 
 ## 1. Package
 
-Use `itchio-happy-farmer-v1.1.0.zip` in this folder.
+Use `happy-farmer-v1.1.0.zip` in this folder.
 
-Upload it on itch.io as an **HTML5 game**. `index.html` is at the ZIP root, so no extra path configuration is needed. The game uses only relative paths and works inside itch.io's iframe.
+The ZIP is platform-neutral. `index.html` is at the archive root, so it can be uploaded to any static host or web-game portal that accepts a ZIP or a plain folder. The game uses only relative paths and works in an iframe subpath.
 
 Included:
 - `index.html`, `legal.html`
@@ -21,17 +21,15 @@ Excluded:
 - Start screen requires an explicit checkbox before New Game, Continue or Import.
 - Consent is version-bound (`farm_legal_consent_v1_1_0`) and persisted in localStorage.
 
-**Game page:** https://lelelelingstudio.itch.io/happy-farmer
-
-**HTML5 upload ID:** 20725135
+**Web build:** https://happyfarmer.game.leleleling.site/
 
 The three public legal pages are live and verified (v1.1.0, 2026-11-22):
 
 | Document | URL |
 |---|---|
-| User Agreement (EULA, gameplay guide merged in) | https://html-classic.itch.zone/html/20725135/legal.html?doc=1&lang=en |
-| Privacy Policy | https://html-classic.itch.zone/html/20725135/legal.html?doc=2&lang=en |
-| Terms of Service | https://html-classic.itch.zone/html/20725135/legal.html?doc=3&lang=en |
+| User Agreement (EULA, gameplay guide merged in) | https://happyfarmer.game.leleleling.site/legal.html?doc=1&lang=en |
+| Privacy Policy | https://happyfarmer.game.leleleling.site/legal.html?doc=2&lang=en |
+| Terms of Service | https://happyfarmer.game.leleleling.site/legal.html?doc=3&lang=en |
 
 Each page also supports `&lang=zh` for Chinese. All three are readable without login.
 
@@ -39,12 +37,12 @@ The original in-game gameplay guide has been merged into the EULA. The lelele Ga
 
 ## 3. lelele Game Rules self-check (v5.0.0)
 
-- 4.6 Three legal agreements: provided as three public HTTPS direct links above. ✅
-- 2.2 Honest age rating: Ages 6+ based on content (no violence, chat, UGC or purchases). ✅
-- 2.3 Pure front-end static game, no build step, no severe known bugs. ✅
-- 2.4 No unauthorized personal data collection; leaderboard is opt-in and anonymizable. ✅
-- 4.4 Offline play: core game runs from local files; only the optional leaderboard needs network. ✅
-- 5.x Content rules: no prohibited content, no ads, no third-party feedback scripts. ✅
+- [x] 4.6 Three legal agreements: provided as three public HTTPS direct links above.
+- [x] 2.2 Honest age rating: Ages 6+ based on content (no violence, chat, UGC or purchases).
+- [x] 2.3 Pure front-end static game, no build step, no severe known bugs.
+- [x] 2.4 No unauthorized personal data collection; leaderboard is opt-in and anonymizable.
+- [x] 4.4 Offline play: core game runs from local files; only the optional leaderboard needs network.
+- [x] 5.x Content rules: no prohibited content, no ads, no third-party feedback scripts.
 
 ## 4. What changed in v1.1.0
 
@@ -97,11 +95,11 @@ Local static server: `python3 -m http.server 8765` at the project root. Browser:
 - `legal.html?doc=1/2/3` and `?lang=zh` all render the correct document. Screenshot: `/tmp/ghf-legal-en2.png`.
 - English documents contain no Chinese characters; gameplay guide lives in the EULA.
 
-## 7. Before you click Publish
+## 7. Before publishing to any platform
 
-- [x] Game slug confirmed as `happy-farmer`.
-- [x] Legal URLs finalized with HTML5 ID 20725135 and added to the itch.io page description.
-- [ ] Set the itch.io content rating / maturity flag to "Everyone 6+" or equivalent.
-- [ ] Verify the leaderboard CORS from the actual itch.io origin. Failure is non-fatal: the game stays playable.
+- [x] Web build URL confirmed as `https://happyfarmer.game.leleleling.site/`.
+- [x] Legal URLs finalized with the canonical domain and added to the store page description.
+- [ ] Set the platform-appropriate age rating to "Everyone 6+" or equivalent.
+- [ ] Verify the leaderboard CORS from each target platform origin. Failure is non-fatal: the game stays playable.
 - [ ] Confirm the three legal links are reachable from a logged-out browser.
 - [ ] Use `happyfarmer.png` as the cover image and `intro-main.en.txt` as the English description.

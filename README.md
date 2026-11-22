@@ -2,11 +2,11 @@
 
 A calm, slow-paced farm management game built as a pure static web app. English is the default language; Chinese can be switched at any time from the in-game settings.
 
-**Version:** 1.1.0  
-**Age rating:** 6+ / 6岁以上  
-**itch.io:** https://lelelelingstudio.itch.io/happy-farmer
+**Version:** 1.1.0
 
-**HTML5 upload ID:** 20725135
+**Age rating:** 6+ / 6岁以上
+
+**Web build:** https://happyfarmer.game.leleleling.site/
 
 **Runtime:** modern browsers, no build step, no backend required for the core game
 
@@ -65,7 +65,7 @@ langdata/
   constants.js           Global version and storage constants
 assets/                  Images, audio and fonts
 tools/                   Manifest and i18n check scripts
-ITCH_RELEASE.md          itch.io publishing checklist
+RELEASE.md               multi-platform publishing checklist
 intro-main.en.txt        English store description
 ```
 
@@ -87,19 +87,19 @@ Three public legal pages ship with the game:
 
 | Document | URL |
 | --- | --- |
-| User Agreement (EULA, including the gameplay guide) | `legal.html?doc=1` |
-| Privacy Policy | `legal.html?doc=2` |
-| Terms of Service | `legal.html?doc=3` |
+| User Agreement (EULA, including the gameplay guide) | https://happyfarmer.game.leleleling.site/legal.html?doc=1&lang=en |
+| Privacy Policy | https://happyfarmer.game.leleleling.site/legal.html?doc=2&lang=en |
+| Terms of Service | https://happyfarmer.game.leleleling.site/legal.html?doc=3&lang=en |
 
 Add `&lang=zh` for Chinese or `&lang=en` for English. Invalid `doc` values fall back to the EULA. These pages are static and readable offline.
 
-See `ITCH_RELEASE.md` for the published HTTPS links, the age-rating statement and the lelele Game Rules compliance check.
+See `RELEASE.md` for the published HTTPS links, the age-rating statement and the lelele Game Rules compliance check.
 
 ## Release
 
-`itchio-happy-farmer-v1.1.0.zip` is the static release package. Upload it as an HTML5 game with `index.html` at the archive root. Do not commit release ZIPs; they are ignored by Git.
+`happy-farmer-v1.1.0.zip` is the platform-neutral static release package. `index.html` is at the archive root, so it can be uploaded to any static host or web-game portal. Do not commit release ZIPs; they are ignored by Git.
 
-Before publishing, follow every checklist item in `ITCH_RELEASE.md`, especially the three legal links and the leaderboard CORS check.
+Before publishing, follow every checklist item in `RELEASE.md`, especially the three legal links and the leaderboard CORS check.
 
 ## Credits
 

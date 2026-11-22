@@ -1,9 +1,9 @@
 (function () {
-    /* 缺键兜底仍用 zh（旧数据包最完整）；但默认界面语言为英文（itch.io 首发） */
+    /* 缺键兜底仍用 zh（旧数据包最完整）；但默认界面语言为英文（多平台发布） */
     const FALLBACK_LANGUAGE = 'zh';
     const UI_DEFAULT_LOCALE = (typeof DEFAULT_LOCALE !== 'undefined') ? DEFAULT_LOCALE : 'en';
 
-    /* 法定文档（规则 / 隐私政策 / 服务条款）以 JS 内联形式随 index.html 静态加载，
+    /* 法定文档（用户协议 / 隐私政策 / 服务条款）以 JS 内联形式随 index.html 静态加载，
        这里登记成表，供 legalDialog.js / settingsUI.js 按当前语言取用。 */
     window.DOCUMENT_PACKS = window.DOCUMENT_PACKS || {};
     if (typeof DOCUMENTS_CH !== 'undefined' && !window.DOCUMENT_PACKS.zh) {
