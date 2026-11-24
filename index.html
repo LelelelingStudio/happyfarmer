@@ -98,6 +98,15 @@
         </div>
         <div class="start-body">
             <p class="start-subtitle" data-i18n="ui.startSubtitle"></p>
+            <section class="start-guide" aria-labelledby="start-guide-title">
+                <h4 id="start-guide-title" data-i18n="ui.startGuideTitle"></h4>
+                <ol class="start-guide-list">
+                    <li data-i18n="ui.startGuideStep1"></li>
+                    <li data-i18n="ui.startGuideStep2"></li>
+                    <li data-i18n="ui.startGuideStep3"></li>
+                    <li data-i18n="ui.startGuideStep4"></li>
+                </ol>
+            </section>
             <p class="publisher-credit" data-i18n="app.publisher" data-params='{"studio":"LelelelingStudio","brand":"Lelelegame"}'></p>
 
             <div id="start-cache-hint" class="start-cache-hint" hidden></div>
@@ -122,6 +131,7 @@
                 </label>
                 <p class="consent-warning" id="legal-consent-warning" data-i18n="legal.consentRequired" hidden></p>
                 <div class="start-meta-actions">
+                    <button type="button" id="start-game-rules-btn" class="btn btn-link" data-i18n="ui.viewRules"></button>
                     <button type="button" id="start-rules-btn" class="btn btn-link" data-i18n="legal.openEula"></button>
                     <button type="button" id="start-privacy-btn" class="btn btn-link" data-i18n="legal.openPrivacy"></button>
                     <button type="button" id="start-terms-btn" class="btn btn-link" data-i18n="legal.openTerms"></button>
@@ -395,6 +405,17 @@
             <button class="close-btn" data-close="settings-dialog">&times;</button>
         </div>
         <div class="settings-body scrollable" id="settings-body"></div>
+    </div>
+</div>
+
+<!-- 游戏规则 -->
+<div id="rules-dialog" class="dialog" role="dialog" aria-modal="true" aria-labelledby="rules-dialog-title">
+    <div class="dialog-content rules-content">
+        <div class="dialog-header">
+            <h3 id="rules-dialog-title" data-i18n="settings.rulesDialogTitle"></h3>
+            <button class="close-btn" data-close="rules-dialog" data-i18n-title="common.close">&times;</button>
+        </div>
+        <div id="rules-body" class="rules-body" aria-live="polite"></div>
     </div>
 </div>
 

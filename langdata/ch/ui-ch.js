@@ -107,6 +107,12 @@ const LANG_CH = {
     ui: {
         loadingFarm: '正在加载农场...',
         startSubtitle: '开始前，请选择一个入口',
+        startGuideTitle: '第一次来农场？照着这几步开始',
+        startGuideStep1: '先去「种子商店」买种子；新农场的仓库里还没有种子。',
+        startGuideStep2: '点一块已经翻好的地，再选刚买的种子种下。',
+        startGuideStep3: '给作物浇水，然后点「下一天」等待成熟。',
+        startGuideStep4: '作物成熟后点地块收获，再卖给商人赚金币。',
+        viewRules: '查看游戏规则',
         startNewGame: '开始新游戏',
         continueGame: '继续游戏',
         importSave: '导入存档',
@@ -525,6 +531,8 @@ const LANG_CH = {
         viewRules: '查看',
         version: '版本',
         loadingRules: '正在加载游戏规则…',
+        rulesLoadFailed: '详细规则暂时无法加载，以下显示用户协议中的玩法简介。',
+        rulesUnavailable: '游戏规则暂时无法显示，请稍后重试。',
         switchingLanguage: '正在切换语言…',
     },
     currency: {

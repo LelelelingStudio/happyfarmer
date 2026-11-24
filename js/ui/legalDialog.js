@@ -1,9 +1,8 @@
 /* ============================================================
-   legalDialog.js  —  三份法律文档入口
+   legalDialog.js  —  法律文档与游戏规则入口
    版本：v1.1.0
    ------------------------------------------------------------
    文档由独立页面 legal.html?doc=1/2/3 提供（可公开直链、离线可读）。
-   玩法说明已并入用户协议，《游戏守则》仅用于上架自查，不在游戏内展示。
    ============================================================ */
 
 const LEGAL_DOC_IDS = Object.freeze({ eula: 1, privacy: 2, terms: 3 });
@@ -30,8 +29,6 @@ function openEulaDialog() { openLegalPage('eula'); }
 function openPrivacyDialog() { openLegalPage('privacy'); }
 function openTermsDialog() { openLegalPage('terms'); }
 
-/* 兼容旧调用名：原「游戏规则」入口现在指向用户协议 */
-function openRulesDialog() { openLegalPage('eula'); }
 function openLegalDoc() { openLegalPage('eula'); }
 
 function initLegalDialog() {
@@ -41,13 +38,15 @@ function initLegalDialog() {
     };
 
     bind('start-rules-btn', openEulaDialog);
+    bind('start-game-rules-btn', openRulesDialog);
     bind('start-privacy-btn', openPrivacyDialog);
     bind('start-terms-btn', openTermsDialog);
     bind('consent-eula-btn', openEulaDialog);
     bind('consent-privacy-btn', openPrivacyDialog);
     bind('consent-terms-btn', openTermsDialog);
 
-    bind('settings-rules-btn', openEulaDialog);
+    bind('settings-rules-btn', openRulesDialog);
+    bind('settings-eula-btn', openEulaDialog);
     bind('settings-privacy-btn', openPrivacyDialog);
     bind('settings-terms-btn', openTermsDialog);
     bind('user-privacy-btn', openPrivacyDialog);

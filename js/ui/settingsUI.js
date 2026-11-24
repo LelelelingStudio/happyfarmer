@@ -130,8 +130,12 @@ function renderSettings() {
         <div class="settings-section">
             <div class="settings-section-title">${t('settings.other')}</div>
             <div class="settings-item">
+                <div class="settings-item-label">${t('settings.rules')}</div>
+                <div class="settings-control"><button class="btn btn-small" id="settings-rules-btn">${t('settings.viewRules')}</button></div>
+            </div>
+            <div class="settings-item">
                 <div class="settings-item-label">${t('legal.eula')}</div>
-                <div class="settings-control"><button class="btn btn-small" id="settings-rules-btn">${t('legal.openEula')}</button></div>
+                <div class="settings-control"><button class="btn btn-small" id="settings-eula-btn">${t('legal.openEula')}</button></div>
             </div>
             <div class="settings-item">
                 <div class="settings-item-label">${t('legal.privacy')}</div>
@@ -309,9 +313,69 @@ function markdownToHtml(markdown) {
             return `<ul>${items}</ul>`;
         }
 
+        if (/^\d+\.\s+/.test(block)) {
+            const items = block.split('\n')
+                .filter(line => /^\d+\.\s+/.test(line))
+                .map(line => `<li>${inline(line.replace(/^\d+\.\s+/, ''))}</li>`)
+                .join('');
+            return `<ol>${items}</ol>`;
+        }
+
+        if (/^>\s?/.test(block)) {
+            return `<blockquote>${block.split('\n')
+                .map(line => `<p>${inline(line.replace(/^>\s?/, ''))}</p>`)
+                .join('')}</blockquote>`;
+        }
+
         const paragraphs = block.split('\n').map(p => `<p>${inline(p)}</p>`).join('');
         return paragraphs;
     }).join('');
+}
+
+async function openRulesDialog() {
+    const dialog = document.getElementById('rules-dialog');
+    const heading = document.getElementById('rules-dialog-title');
+    const body = document.getElementById('rules-body');
+    if (!dialog || !heading || !body) {
+        console.error('[rules] Game rules dialog is missing from the page.');
+        return;
+    }
+
+    dialog.classList.add('show');
+    body.setAttribute('aria-busy', 'true');
+    body.textContent = t('settings.loadingRules');
+
+    const locale = (typeof currentLegalLang === 'function')
+        ? currentLegalLang()
+        : (String(window.currentLocale || '').startsWith('zh') ? 'zh' : 'en');
+    const folder = locale === 'zh' ? 'ch' : 'en';
+
+    try {
+        const response = await fetch(`langdata/${folder}/rules-${folder}.json`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const rules = await response.json();
+        if (!rules || typeof rules.content !== 'string' || !rules.content.trim()) {
+            throw new Error('Rules document has no content.');
+        }
+
+        heading.textContent = rules.title || t('settings.rulesDialogTitle');
+        body.innerHTML = markdownToHtml(rules.content);
+    } catch (error) {
+        console.error(`[rules] Could not load ${folder} rules.`, error);
+        const documents = window.DOCUMENT_PACKS && window.DOCUMENT_PACKS[locale];
+        const fallback = documents && documents.eula;
+        heading.textContent = t('settings.rulesDialogTitle');
+
+        if (fallback && typeof fallback.content === 'string') {
+            body.innerHTML = `<p class="rules-load-warning" role="alert">${t('settings.rulesLoadFailed')}</p>`
+                + markdownToHtml(fallback.content);
+        } else {
+            body.textContent = t('settings.rulesUnavailable');
+        }
+    } finally {
+        body.removeAttribute('aria-busy');
+    }
 }
 
 /* -------- 用户中心 -------- */
