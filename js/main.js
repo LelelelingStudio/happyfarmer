@@ -848,39 +848,35 @@ function _bootstrapAfterDataReady() {
                 _initStartScreen();
             } catch (e) {
                 console.error('[main] 起始屏初始化失败：', e);
-                hideLoadingScreen();
+                if (typeof window.__loaderShowError === 'function') window.__loaderShowError();
             }
         };
-        /* 软超时放行：loader 到时间后会调用它，避免慢网速下玩家一直等 */
+        /* 只由 loader 在所有资源真实结束后放行，不再有软/硬超时抢跑 */
         let released = false;
         const releaseOnce = () => {
             if (released) return;
             released = true;
-            /* 先把加载页收掉，再进起始弹窗：任何情况下都不留绿屏 */
             try { hideLoadingScreen(); } catch (e) { /* ignore */ }
             afterAssets();
         };
         window.__loaderRelease = releaseOnce;
-        window.__forceReleaseStart = releaseOnce;
-        /* 加载器可能更早就已经放行了（超时兜底），补一次 */
         if (window.__loaderPendingRelease) releaseOnce();
         if (typeof runAssetLoading === 'function') {
-            runAssetLoading().then(() => releaseOnce()).catch((e) => {
-                console.warn('[main] 资源预加载失败，仍然继续：', e && e.message);
+            runAssetLoading().then((result) => {
+                /* loader 判定关键资源失败：留在加载页显示重试，不启动游戏 */
+                if (result && result.ok === false) return;
                 releaseOnce();
+            }).catch((e) => {
+                console.error('[main] 资源预加载异常：', e && e.message);
+                if (typeof window.__loaderShowError === 'function') window.__loaderShowError();
             });
         } else {
             afterAssets();
         }
     }).catch((e) => {
-        console.error('[main] 数据加载失败，仍尝试启动：', e);
+        console.error('[main] 数据加载失败：', e);
         _dataReadyDone = true;
-        try {
-            _initStartScreen();
-        } catch (e2) {
-            console.error('[main] 起始屏初始化再次失败：', e2);
-        }
-        hideLoadingScreen();
+        if (typeof window.__loaderShowError === 'function') window.__loaderShowError();
     });
 }
 
@@ -892,15 +888,4 @@ if (document.readyState === 'loading') {
     setTimeout(_bootstrapAfterDataReady, 0);
 }
 
-/* 兜底：数据加载卡住时也不能永远停在加载页 */
-setTimeout(() => {
-    if (_sessionStarted) return;
-    if (_dataReadyDone) return;   /* 正常路径已经在处理了 */
-    console.warn('[main] data load timeout, forcing start screen');
-    if (typeof forceFinishLoading === 'function') forceFinishLoading();
-    if (typeof window.__forceReleaseStart === 'function') {
-        window.__forceReleaseStart();
-    } else {
-        setTimeout(() => hideLoadingScreen(), 400);
-    }
-}, 20000);
+/* 加载兜底统一交给 loader.js：只有全部资源 settle 后才放行，这里不再强制隐藏加载页 */

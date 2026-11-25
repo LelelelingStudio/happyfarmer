@@ -30,6 +30,8 @@ function renderGame() {
  * 显示 / 隐藏 loading 遮罩
  */
 function hideLoadingScreen() {
+    /* 关键资源失败时保留加载页（含重试按钮），不能让游戏带着缺失资源启动 */
+    if (window.__loaderFailed && !window.__loaderReleased) return;
     const el = document.getElementById('loading-screen');
     if (el) {
         el.classList.add('hide');

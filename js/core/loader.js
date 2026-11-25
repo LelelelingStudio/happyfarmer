@@ -1,11 +1,15 @@
 /* ============================================================
    loader.js  —  资源加载进度（manifest 驱动）
    ------------------------------------------------------------
-   加载顺序：html → css → js → langdata → 音频元数据 → 图片 → 其他
-   进度权重（总和 100%）：
+   核心原则：
+   - 只有所有资源都「真正结束」（加载成功 / 明确报错 / 单项超时判失败）
+     之后，进度条才会走到 100% 并放行。
+   - 任何兜底超时都不会伪装成「加载成功」：超时一律记为失败并记录。
+   - 关键资源（脚本 / 语言数据）失败时停留在加载页并显示重试按钮，
+     绝不带着半加载状态进入游戏。
+   权重（总和 100%）：
      html 3% · css 7% · js 12% · langdata 18%
      音频 20% · 图片 30% · 其他 10%
-   进度条会真实走完再放行；慢网由软/硬兜底保证不会卡死。
    ============================================================ */
 
 const LOADER_WEIGHTS = {
@@ -29,10 +33,24 @@ const LOADER_STAGE_LABEL = {
 };
 
 const LOADER_IMAGE_CONCURRENCY = 6;      /* 本地图片并发预取 */
-const LOADER_IMAGE_DELAY_MS = 80;        /* 关键数据就绪后立刻开始，不再等到放行之后 */
 const LOADER_MIN_VISIBLE_MS = 900;       /* 进度条至少可见时间，避免一闪而过 */
-const LOADER_HARD_TIMEOUT_MS = 10000;    /* 最终兜底 */
-const LOADER_SOFT_TIMEOUT_MS = 6000;     /* 慢网兜底：进度直接走完并放行 */
+const LOADER_SCRIPT_TIMEOUT_MS = 15000;  /* CSS / 主脚本等待上限 */
+const LOADER_DATA_TIMEOUT_MS = 15000;    /* 语言数据等待上限 */
+const LOADER_AUDIO_TIMEOUT_MS = 10000;   /* 单个音频元数据等待上限 */
+const LOADER_IMAGE_TIMEOUT_MS = 15000;   /* 单张图片等待上限 */
+const LOADER_READY_TIMEOUT_MS = 10000;   /* document.readyState 等待上限 */
+
+/* 对外可观测状态：浏览器控制台可直接查看 window.__assetLoad */
+window.__assetLoad = {
+    settled: false,
+    ok: false,
+    stage: 'html',
+    total: 7,
+    done: 0,
+    failed: [],
+    startedAt: 0,
+    finishedAt: 0,
+};
 
 /* -------- UI -------- */
 
@@ -45,16 +63,60 @@ function _loaderEls() {
     };
 }
 
+function _loaderText(key, fallback) {
+    try {
+        const value = (typeof t === 'function') ? t(key) : '';
+        return (value && value !== key) ? value : fallback;
+    } catch (e) {
+        return fallback;
+    }
+}
+
 function _loaderSetProgress(percent, stageKey) {
     const { fill, percent: pctEl, status } = _loaderEls();
     const value = Math.max(0, Math.min(100, percent));
     if (fill) fill.style.width = value.toFixed(2) + '%';
     if (pctEl) pctEl.textContent = value.toFixed(1) + '%';
-    if (status && stageKey) {
-        const label = t(LOADER_STAGE_LABEL[stageKey] || 'ui.loadingFarm');
-        status.textContent = label || '';
+    if (stageKey) {
+        window.__assetLoad.stage = stageKey;
+        if (status && !status.dataset.loaderError) {
+            status.textContent = _loaderText(
+                LOADER_STAGE_LABEL[stageKey] || 'loader.stageOther',
+                'Loading…'
+            );
+        }
     }
 }
+
+/** 关键资源失败：停留在加载页，显示错误与重试入口 */
+function _loaderShowError(message) {
+    const { screen, status, fill } = _loaderEls();
+    window.__loaderFailed = true;
+    try {
+        if (status) {
+            status.dataset.loaderError = '1';
+            status.setAttribute('role', 'alert');
+            status.textContent = message || _loaderText('loader.errorTitle', 'Failed to load required resources.');
+        }
+        if (screen) screen.classList.add('error');
+        if (fill) fill.style.background = 'var(--c-danger, #B42318)';
+        let btn = document.getElementById('loader-retry-btn');
+        if (!btn && screen) {
+            btn = document.createElement('button');
+            btn.id = 'loader-retry-btn';
+            btn.type = 'button';
+            btn.className = 'loader-retry-btn';
+            btn.textContent = _loaderText('loader.errorRetry', 'Retry');
+            btn.addEventListener('click', () => location.reload());
+            screen.appendChild(btn);
+        }
+    } catch (e) {
+        console.error('[loader] failed to render error state', e);
+    }
+    console.error('[loader] critical load failure:', message);
+}
+
+window.__loaderShowError = _loaderShowError;
 
 /* -------- 小工具 -------- */
 
@@ -62,35 +124,73 @@ function _loaderSleep(ms) {
     return new Promise((r) => setTimeout(r, ms));
 }
 
-/* 轮询直到条件成立或超时（用于等待浏览器自己加载 css / js） */
-async function _waitFor(check, timeoutMs = 6000, interval = 40) {
-    const end = Date.now() + timeoutMs;
-    while (Date.now() < end) {
-        try { if (check()) return true; } catch (e) { /* ignore */ }
-        await _loaderSleep(interval);
-    }
-    return false;
+/** 单项任务：成功 / 失败都 settle，超时一律记为失败 */
+function _settle(task, timeoutMs) {
+    return new Promise((resolve) => {
+        let settled = false;
+        const finish = (result) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            resolve(result);
+        };
+        const timer = setTimeout(() => finish({ ok: false, reason: 'timeout' }), timeoutMs);
+        try {
+            task(finish);
+        } catch (e) {
+            finish({ ok: false, reason: (e && e.message) || 'error' });
+        }
+    });
 }
 
-/* 带进度的并发池 */
+/** 轮询条件，直到成立或超时；超时返回 ok:false，绝不假装成功 */
+function _waitSettled(check, timeoutMs) {
+    const started = Date.now();
+    return new Promise((resolve) => {
+        const tick = () => {
+            let ready = false;
+            try { ready = !!check(); } catch (e) { /* keep waiting */ }
+            if (ready) { resolve({ ok: true, reason: null }); return; }
+            if (Date.now() - started >= timeoutMs) {
+                resolve({ ok: false, reason: 'timeout' });
+                return;
+            }
+            setTimeout(tick, 40);
+        };
+        tick();
+    });
+}
+
+/** 带进度的并发池；每个结果都是 {ok, reason}，失败会被收集而不是吞掉 */
 function _loadPool(items, loader, concurrency, onProgress) {
     return new Promise((resolve) => {
-        if (!items || items.length === 0) { onProgress(items ? items.length : 0, 0); resolve(); return; }
+        const failed = [];
+        if (!items || items.length === 0) {
+            if (onProgress) onProgress(0, 0, 0);
+            resolve({ total: 0, done: 0, failed });
+            return;
+        }
         let index = 0;
         let done = 0;
         let active = 0;
         const next = () => {
-            if (index >= items.length && active === 0) { resolve(); return; }
+            if (index >= items.length && active === 0) {
+                resolve({ total: items.length, done, failed });
+                return;
+            }
             while (active < concurrency && index < items.length) {
                 const item = items[index++];
                 active++;
                 Promise.resolve()
                     .then(() => loader(item))
-                    .catch(() => {})
-                    .then(() => {
+                    .catch((e) => ({ ok: false, reason: (e && e.message) || 'error' }))
+                    .then((result) => {
                         active--;
                         done++;
-                        onProgress(items.length, done);
+                        if (!result || !result.ok) {
+                            failed.push({ item, reason: (result && result.reason) || 'error' });
+                        }
+                        if (onProgress) onProgress(items.length, done, failed.length);
                         next();
                     });
             }
@@ -100,68 +200,83 @@ function _loadPool(items, loader, concurrency, onProgress) {
 }
 
 function _preloadImage(src) {
-    return new Promise((resolve) => {
+    return _settle((finish) => {
         const img = new Image();
-        let settled = false;
-        const finish = () => { if (!settled) { settled = true; resolve(); } };
-        img.onload = finish;
-        img.onerror = finish;
-        /* 兜底：单张图最多等 15 秒 */
-        setTimeout(finish, 15000);
+        img.onload = () => finish({ ok: true });
+        img.onerror = () => finish({ ok: false, reason: 'error' });
         img.src = src;
-    });
+    }, LOADER_IMAGE_TIMEOUT_MS);
 }
 
 function _preloadAudioMeta(src) {
-    return new Promise((resolve) => {
-        try {
-            const el = new Audio();
-            let settled = false;
-            const finish = () => { if (!settled) { settled = true; el.src = ''; resolve(); } };
-            el.preload = 'metadata';
-            el.addEventListener('loadedmetadata', finish, { once: true });
-            el.addEventListener('error', finish, { once: true });
-            setTimeout(finish, 4000);
-            el.src = src;
-        } catch (e) { resolve(); }
-    });
+    return _settle((finish) => {
+        const el = new Audio();
+        el.preload = 'metadata';
+        el.addEventListener('loadedmetadata', () => {
+            el.src = '';
+            finish({ ok: true });
+        }, { once: true });
+        el.addEventListener('error', () => {
+            el.src = '';
+            finish({ ok: false, reason: 'error' });
+        }, { once: true });
+        el.src = src;
+    }, LOADER_AUDIO_TIMEOUT_MS);
 }
 
 /* -------- 主流程 -------- */
 
 let _loaderRunning = null;
-let _loaderForceFinished = false;
-let _loaderSoftDone = false;
+let _loaderReleased = false;
 
-/* 放行：通知 main.js 进入起始弹窗（只生效一次） */
+/** 放行：通知 main.js 进入起始弹窗（只生效一次，且只在真实完成后调用） */
 function releaseLoader() {
-    if (_loaderSoftDone) return;
-    _loaderSoftDone = true;
+    if (_loaderReleased) return;
+    _loaderReleased = true;
+    window.__loaderReleased = true;
     try {
-        window.__loaderReleased = true;
         if (typeof window.__loaderRelease === 'function') window.__loaderRelease();
         else window.__loaderPendingRelease = true;   /* main.js 还没挂钩子，等它挂上再放行 */
-    } catch (e) { /* ignore */ }
+    } catch (e) {
+        console.error('[loader] release hook failed', e);
+    }
 }
 
-/** 让加载条直接走完并放行（数据加载超时等异常情况下调用） */
+/**
+ * 兼容旧调用点：不再「强制 100% 放行」。
+ * 任何兜底都必须走真实等待，这里只记录一次警告。
+ */
 function forceFinishLoading() {
-    _loaderForceFinished = true;
-    _loaderSetProgress(100, 'other');
-    releaseLoader();
+    console.warn('[loader] forceFinishLoading() is deprecated; real completion is required before release');
 }
 
 async function runAssetLoading() {
     if (_loaderRunning) return _loaderRunning;
 
     _loaderRunning = (async () => {
-        const manifest = (typeof ASSET_MANIFEST !== 'undefined' && ASSET_MANIFEST) ? ASSET_MANIFEST : null;
+        const state = window.__assetLoad;
         const startedAt = Date.now();
+        state.startedAt = startedAt;
+        state.failed.length = 0;
+
+        const manifest = (typeof ASSET_MANIFEST !== 'undefined' && ASSET_MANIFEST) ? ASSET_MANIFEST : null;
         let progress = 0;
 
         const add = (weight, ratio, stageKey) => {
             progress += weight * Math.max(0, Math.min(1, ratio));
+            state.done++;
             _loaderSetProgress(progress, stageKey);
+        };
+        const noteFailed = (type, item, reason) => {
+            state.failed.push({ type, item, reason: reason || 'error' });
+            console.warn('[loader] asset failed:', type, item, reason);
+        };
+        const abort = (message) => {
+            state.settled = true;
+            state.ok = false;
+            state.finishedAt = Date.now();
+            _loaderShowError(message);
+            return { ok: false, failed: state.failed.slice() };
         };
 
         /* --- 1. HTML（当前文档已经解析完成） --- */
@@ -170,107 +285,133 @@ async function runAssetLoading() {
         add(LOADER_WEIGHTS.html, 1, 'html');
 
         if (!manifest) {
-            console.warn('[loader] assets/manifest.js missing, skipping preload');
-            forceFinishLoading();
-            return;
+            return abort(_loaderText('loader.errorMissingManifest', 'Asset manifest is missing. Please reload.'));
         }
 
-        /* --- 2. CSS --- */
-        /* 直接等页面里的 <link rel=stylesheet>，不要用 manifest 数量：
-           manifest 还包含只给 legal.html 用的 css/legal.css，数量会多一个。 */
+        /* --- 2. CSS：等页面里真实的 <link rel=stylesheet> --- */
         const cssLinks = Array.from(document.querySelectorAll('link[rel="stylesheet"]'));
-        const cssReady = cssLinks.length > 0
-            ? await _waitFor(() => cssLinks.every((link) => !!link.sheet), 6000)
-            : true;
-        add(LOADER_WEIGHTS.css, cssReady ? 1 : 0.5, 'css');
-        await _loaderSleep(30);
-
-        /* --- 3. JS（等主入口就位） --- */
-        const jsReady = await _waitFor(
-            () => typeof window.bootstrap === 'function' && !!window.__dataReadyPromise,
-            8000
-        );
-        add(LOADER_WEIGHTS.js, jsReady ? 1 : 0.5, 'js');
-        await _loaderSleep(30);
-
-        /* --- 4. langdata --- */
-        let langReady = false;
-        if (window.__dataReadyPromise && typeof window.__dataReadyPromise.then === 'function') {
-            langReady = await Promise.race([
-                window.__dataReadyPromise.then(() => true).catch(() => false),
-                _loaderSleep(8000).then(() => false),
-            ]);
+        if (cssLinks.length > 0) {
+            const cssCount = { value: 0 };
+            const cssResult = await _waitSettled(() => {
+                cssCount.value = cssLinks.filter((link) => !!link.sheet).length;
+                return cssCount.value === cssLinks.length;
+            }, LOADER_SCRIPT_TIMEOUT_MS);
+            if (!cssResult.ok) {
+                noteFailed('css', `${cssCount.value}/${cssLinks.length}`, cssResult.reason);
+            }
+            add(LOADER_WEIGHTS.css, cssResult.ok ? 1 : cssCount.value / cssLinks.length, 'css');
+        } else {
+            add(LOADER_WEIGHTS.css, 1, 'css');
         }
-        add(LOADER_WEIGHTS.langdata, langReady ? 1 : 0.6, 'langdata');
         await _loaderSleep(30);
 
-        /* --- 5. 音频元数据（不播放、不整首下载） --- */
+        /* --- 3. JS：等主入口与数据加载器就位 --- */
+        const jsResult = await _waitSettled(() =>
+            typeof window.bootstrap === 'function' && !!window.__dataReadyPromise,
+            LOADER_SCRIPT_TIMEOUT_MS
+        );
+        if (!jsResult.ok) {
+            noteFailed('js', 'bootstrap/__dataReadyPromise', jsResult.reason);
+            return abort(_loaderText('loader.errorScripts', 'Game scripts failed to load. Please check your connection and retry.'));
+        }
+        add(LOADER_WEIGHTS.js, 1, 'js');
+        await _loaderSleep(30);
+
+        /* --- 4. langdata：等动态语言包真正加载完 --- */
+        let langResult = { ok: false, reason: 'error' };
+        try {
+            langResult = await Promise.race([
+                window.__dataReadyPromise.then(() => ({ ok: true, reason: null }))
+                    .catch((e) => ({ ok: false, reason: (e && e.message) || 'error' })),
+                _loaderSleep(LOADER_DATA_TIMEOUT_MS).then(() => ({ ok: false, reason: 'timeout' })),
+            ]);
+        } catch (e) {
+            langResult = { ok: false, reason: (e && e.message) || 'error' };
+        }
+        if (!langResult.ok) {
+            noteFailed('langdata', 'language packs', langResult.reason);
+            return abort(_loaderText('loader.errorData', 'Language data failed to load. Please retry.'));
+        }
+        add(LOADER_WEIGHTS.langdata, 1, 'langdata');
+        await _loaderSleep(30);
+
+        /* --- 5. 音频元数据（不播放、不整首下载），每个都等真正 settle --- */
         const audioList = manifest.audio || [];
         if (audioList.length > 0) {
-            await _loadPool(audioList, (src) => _preloadAudioMeta(src), 2, (total, done) => {
-                _loaderSetProgress(progress + LOADER_WEIGHTS.audio * (done / total), 'audio');
-            });
+            const audioResult = await _loadPool(
+                audioList,
+                (src) => _preloadAudioMeta(src),
+                2,
+                (total, done) => _loaderSetProgress(progress + LOADER_WEIGHTS.audio * (done / total), 'audio')
+            );
+            audioResult.failed.forEach((f) => noteFailed('audio', f.item, f.reason));
+            add(LOADER_WEIGHTS.audio, audioResult.done / audioResult.total, 'audio');
+        } else {
+            add(LOADER_WEIGHTS.audio, 1, 'audio');
         }
-        progress += LOADER_WEIGHTS.audio;
-        _loaderSetProgress(progress, 'audio');
         await _loaderSleep(30);
 
-        /* --- 6. 图片（进入游戏前完成预取，慢网兜底跳过） --- */
-        const slowNet = (() => {
-            try {
-                const c = navigator.connection || {};
-                return !!c.saveData || /(^|-)(2g|slow-2g)$/.test(c.effectiveType || '');
-            } catch (e) { return false; }
-        })();
-        const imageList = slowNet ? [] : [...(manifest.images || [])];
-        if (slowNet) console.warn('[loader] slow network detected, skipping image preload');
-        await _loaderSleep(LOADER_IMAGE_DELAY_MS);
-
+        /* --- 6. 图片：全部预取完成后才继续，不再 6 秒 race 后直接加满 --- */
+        const imageList = [...(manifest.images || [])];
         if (imageList.length > 0) {
-            await Promise.race([
-                _loadPool(imageList, (src) => _preloadImage(src), LOADER_IMAGE_CONCURRENCY, (total, done) => {
-                    _loaderSetProgress(progress + LOADER_WEIGHTS.images * (done / total), 'images');
-                }),
-                _loaderSleep(6000),
-            ]);
+            const imageResult = await _loadPool(
+                imageList,
+                (src) => _preloadImage(src),
+                LOADER_IMAGE_CONCURRENCY,
+                (total, done) => _loaderSetProgress(progress + LOADER_WEIGHTS.images * (done / total), 'images')
+            );
+            imageResult.failed.forEach((f) => noteFailed('image', f.item, f.reason));
+            add(LOADER_WEIGHTS.images, imageResult.done / imageResult.total, 'images');
+        } else {
+            add(LOADER_WEIGHTS.images, 1, 'images');
         }
-        progress += LOADER_WEIGHTS.images;
-        _loaderSetProgress(progress, 'images');
 
-        /* --- 7. 其他（字体/图标/杂项） --- */
-        const pageReady = await _waitFor(() => document.readyState === 'complete', 5000);
-        add(LOADER_WEIGHTS.other, pageReady ? 1 : 0.6, 'other');
+        /* --- 7. 其他（字体 / 图标 / 页面 onload） --- */
+        const pageResult = await _waitSettled(
+            () => document.readyState === 'complete',
+            LOADER_READY_TIMEOUT_MS
+        );
+        if (!pageResult.ok) noteFailed('other', 'document.readyState', pageResult.reason);
+        add(LOADER_WEIGHTS.other, pageResult.ok ? 1 : 0.8, 'other');
 
         const elapsed = Date.now() - startedAt;
         if (elapsed < LOADER_MIN_VISIBLE_MS) {
             await _loaderSleep(LOADER_MIN_VISIBLE_MS - elapsed);
         }
 
+        /* 到这里所有阶段都已 settle，才允许 100% 与放行 */
+        progress = 100;
         _loaderSetProgress(100, 'other');
-        console.log(`[loader] assets ready in ${((Date.now() - startedAt) / 1000).toFixed(2)}s`);
+        state.settled = true;
+        state.ok = state.failed.length === 0;
+        state.finishedAt = Date.now();
+
+        if (state.failed.length > 0) {
+            const { status } = _loaderEls();
+            if (status) {
+                status.textContent = _loaderText(
+                    'loader.partialWarning',
+                    'Some optional assets failed to load; continuing anyway.'
+                );
+            }
+            console.warn(`[loader] ${state.failed.length} optional asset(s) failed; see window.__assetLoad.failed`);
+        }
+
+        console.log(`[loader] all assets settled in ${((state.finishedAt - startedAt) / 1000).toFixed(2)}s (ok=${state.ok})`);
         releaseLoader();
+        return { ok: state.ok, failed: state.failed.slice() };
     })();
 
     return _loaderRunning;
 }
 
-/* 脚本一执行就把状态写出来（不必等数据文件就绪） */
+/* 脚本一执行就把初始状态写出来（不必等数据文件就绪） */
 if (typeof t === 'function') _loaderSetProgress(0, 'html');
 
-/* 软超时：网速很慢时不要让玩家干等太久，先放行进游戏，资源继续在后台加载 */
+/* 若 main.js 因 404 / 语法错误未能启动，loader 自己跑起来，
+   这样关键资源缺失时会显示明确错误与重试，而不是永远停在 0%。 */
 setTimeout(() => {
-    if (_sessionStarted) return;
-    if (_loaderSoftDone) return;
-    _loaderSetProgress(100, 'other');
-    console.warn('[loader] 必要资源等待超过 ' + (LOADER_SOFT_TIMEOUT_MS / 1000) + 's，先放行，其余资源后台加载');
-    releaseLoader();
-}, LOADER_SOFT_TIMEOUT_MS);
-
-/* 硬超时兜底 */
-setTimeout(() => {
-    if (_loaderForceFinished) return;
-    _loaderForceFinished = true;
-    _loaderSetProgress(100, 'other');
-    console.warn('[loader] 加载超时，强制放行');
-    releaseLoader();
-}, LOADER_HARD_TIMEOUT_MS);
+    if (typeof runAssetLoading === 'function') {
+        runAssetLoading().catch((e) => console.error('[loader] unexpected error', e));
+    }
+}, 1500);

@@ -455,6 +455,40 @@ body.game-started #start-screen {
     font-variant-numeric: tabular-nums;
 }
 
+/* 加载失败：保留遮罩并给出明确重试入口 */
+#loading-screen.error .loading-spinner {
+    animation-play-state: paused;
+    border-top-color: var(--c-danger, #B42318);
+}
+
+#loading-screen.error .loading-status {
+    color: var(--c-danger, #B42318);
+    font-weight: 700;
+    max-width: min(520px, 86vw);
+}
+
+.loader-retry-btn {
+    appearance: none;
+    border: 0;
+    border-radius: var(--radius-round, 999px);
+    padding: 12px 28px;
+    background: linear-gradient(135deg, var(--c-primary), var(--c-primary-dark));
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(31, 95, 58, 0.25);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.loader-retry-btn:hover,
+.loader-retry-btn:focus-visible {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px rgba(31, 95, 58, 0.32);
+    outline: 3px solid var(--c-primary-lighter);
+    outline-offset: 2px;
+}
+
 /* 静音状态的声音按钮 */
 #sound-btn.muted {
     opacity: 0.55;

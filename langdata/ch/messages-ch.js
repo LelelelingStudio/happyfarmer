@@ -197,6 +197,12 @@ Object.assign(MESSAGES_CH, {
         stageAudio: "正在加载背景音乐与音效…",
         stageImages: "正在加载图片素材…",
         stageOther: "正在完成最后的准备…",
+        errorTitle: "部分必要资源加载失败。",
+        errorRetry: "重新加载",
+        errorMissingManifest: "资源清单缺失，请刷新页面重试。",
+        errorScripts: "游戏脚本加载失败，请检查网络后重试。",
+        errorData: "语言数据加载失败，请重试。",
+        partialWarning: "少量可选资源未能加载，游戏仍将继续。",
     },
     notifications: {
         audioBlockedTitle: "声音已就绪",

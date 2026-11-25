@@ -55,40 +55,11 @@
 
 <!-- 起始选择弹窗（可继续缓存 / 新游戏 / 导入存档） -->
 
-<!-- ============================================================
-     加载兜底（内联，不依赖任何外部 JS）
-     无论后面的脚本是否报错、网络多慢，最多 12 秒一定放行，绝不绿屏。
-     ============================================================ -->
+<!-- 让加载页立即可见（main.css 默认 html{visibility:hidden}）。
+     加载放行统一由 js/core/loader.js 在所有资源真实结束后执行，
+     不再有定时/报错抢跑隐藏进度条的逻辑。 -->
 <script>
-(function () {
-    var FAILSAFE_MS = 12000;
-    var done = false;
-    /* CSS 已加载，立刻让加载页可见；否则 html{visibility:hidden} 会把进度条一起藏掉 */
-    document.documentElement.classList.add('js-loaded');
-    function reveal() {
-        if (done) return;
-        done = true;
-        try {
-            var el = document.getElementById('loading-screen');
-            if (el) {
-                el.classList.add('hide');
-                setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 700);
-            }
-            /* 让页面可见（main.css 默认 html{visibility:hidden}） */
-            document.documentElement.classList.add('js-loaded');
-            /* 如果游戏主流程没起来，至少把起始弹窗露出来，别让玩家看着一片绿 */
-            var ss = document.getElementById('start-screen');
-            var started = document.body && document.body.classList.contains('game-started');
-            if (ss && !started && !ss.classList.contains('show') && (window.__startBound || window.__bootstrapped)) {
-                ss.classList.add('show');
-            }
-        } catch (e) { /* 兜底本身绝不能抛错 */ }
-    }
-    window.__failsafeReveal = reveal;
-    setTimeout(reveal, FAILSAFE_MS);
-    /* 任何脚本错误都提前放行 */
-    window.addEventListener('error', function () { setTimeout(reveal, 1200); }, true);
-})();
+document.documentElement.classList.add('js-loaded');
 </script>
 
 <div id="start-screen" class="dialog start-dialog">

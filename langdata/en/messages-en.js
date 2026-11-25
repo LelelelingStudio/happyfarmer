@@ -198,6 +198,12 @@ Object.assign(MESSAGES_EN, {
         stageAudio: "Loading music and sound…",
         stageImages: "Loading images…",
         stageOther: "Finishing up…",
+        errorTitle: "Some required resources could not be loaded.",
+        errorRetry: "Retry loading",
+        errorMissingManifest: "The asset list is missing. Please reload the page.",
+        errorScripts: "Game scripts failed to load. Check your connection, then retry.",
+        errorData: "Language data failed to load. Please retry.",
+        partialWarning: "A few optional assets failed to load — the game will continue.",
     },
     notifications: {
         audioBlockedTitle: "Audio ready",
