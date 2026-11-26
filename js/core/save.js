@@ -235,7 +235,7 @@ function saveGame(force = false) {
         }
 
         /* 新版：编码后写入（倒序 + Unicode偏移 + Base64） */
-        localStorage.setItem(SAVE_KEY, encodeSave(data));
+        HFStorage.setItem(SAVE_KEY, encodeSave(data));
         gameState._dirty = false;
         gameState._lastSavedAt = Date.now();
 
@@ -307,7 +307,7 @@ async function manualSave() {
  */
 function loadGame() {
     try {
-        const raw = localStorage.getItem(SAVE_KEY);
+        const raw = HFStorage.getItem(SAVE_KEY);
         if (!raw) return false;
 
         /* 新版是加密存档；旧版明文 JSON 也能解开（自动兼容） */
@@ -340,7 +340,7 @@ function loadGame() {
  * 是否存在本地存档
  */
 function hasLocalSave() {
-    return !!localStorage.getItem(SAVE_KEY);
+    return !!HFStorage.getItem(SAVE_KEY);
 }
 
 /* ============================================================
@@ -419,9 +419,9 @@ async function resetSave(confirmFirst = true) {
     }
 
     try {
-        localStorage.removeItem(SAVE_KEY);
-        localStorage.removeItem(SAVE_AVATAR_KEY);
-        localStorage.removeItem(SAVE_META_KEY);
+        HFStorage.removeItem(SAVE_KEY);
+        HFStorage.removeItem(SAVE_AVATAR_KEY);
+        HFStorage.removeItem(SAVE_META_KEY);
         resetGameState();
         return true;
     } catch (e) {
@@ -437,9 +437,9 @@ async function resetSave(confirmFirst = true) {
 function saveAvatar(dataUrl) {
     try {
         if (!dataUrl) {
-            localStorage.removeItem(SAVE_AVATAR_KEY);
+            HFStorage.removeItem(SAVE_AVATAR_KEY);
         } else {
-            localStorage.setItem(SAVE_AVATAR_KEY, dataUrl);
+            HFStorage.setItem(SAVE_AVATAR_KEY, dataUrl);
         }
         return true;
     } catch (e) {
@@ -450,7 +450,7 @@ function saveAvatar(dataUrl) {
 
 function loadAvatar() {
     try {
-        const dataUrl = localStorage.getItem(SAVE_AVATAR_KEY);
+        const dataUrl = HFStorage.getItem(SAVE_AVATAR_KEY);
         /* 存档里已经带了头像标记（emoji / 素材库文件名 / 自定义图）时以存档为准，
            只有存档没记录头像时才退回本地 base64 备份（老存档兼容）。 */
         if (dataUrl && !gameState.user.avatar) {
@@ -468,9 +468,9 @@ function loadAvatar() {
  */
 function clearLocalSave() {
     try {
-        localStorage.removeItem(SAVE_KEY);
-        localStorage.removeItem(SAVE_AVATAR_KEY);
-        localStorage.removeItem(SAVE_META_KEY);
+        HFStorage.removeItem(SAVE_KEY);
+        HFStorage.removeItem(SAVE_AVATAR_KEY);
+        HFStorage.removeItem(SAVE_META_KEY);
         return true;
     } catch (e) {
         console.error('清空本地存档失败', e);
@@ -484,7 +484,7 @@ function _saveUserMeta() {
             nickname: gameState.user.nickname,
             userId: gameState.user.userId,
         };
-        localStorage.setItem(SAVE_META_KEY, JSON.stringify(meta));
+        HFStorage.setItem(SAVE_META_KEY, JSON.stringify(meta));
     } catch (e) {
         /* 忽略 */
     }
@@ -492,7 +492,7 @@ function _saveUserMeta() {
 
 function _loadUserMeta() {
     try {
-        const raw = localStorage.getItem(SAVE_META_KEY);
+        const raw = HFStorage.getItem(SAVE_META_KEY);
         const meta = safeJSONParse(raw, null);
         if (meta) {
             if (meta.nickname) gameState.user.nickname = meta.nickname;

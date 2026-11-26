@@ -265,7 +265,7 @@ function bindAvatarPicker(root) {
 
 function getCachedSaveSummary() {
     try {
-        const raw = localStorage.getItem(typeof SAVE_KEY !== 'undefined' ? SAVE_KEY : 'farm_game_save_v1');
+        const raw = HFStorage.getItem(typeof SAVE_KEY !== 'undefined' ? SAVE_KEY : 'farm_game_save_v1');
         if (!raw) return null;
         /* 存档是加密的（或旧版明文），统一用 decodeSave 解 */
         let data = (typeof decodeSave === 'function') ? decodeSave(raw) : null;

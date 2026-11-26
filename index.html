@@ -120,7 +120,6 @@ document.documentElement.classList.add('js-loaded');
                 </label>
                 <p class="consent-warning" id="legal-consent-warning" data-i18n="legal.consentRequired" hidden></p>
                 <div class="start-meta-actions">
-                    <button type="button" id="start-game-rules-btn" class="btn btn-link" data-i18n="ui.viewRules"></button>
                     <button type="button" id="start-rules-btn" class="btn btn-link" data-i18n="legal.openEula"></button>
                     <button type="button" id="start-privacy-btn" class="btn btn-link" data-i18n="legal.openPrivacy"></button>
                     <button type="button" id="start-terms-btn" class="btn btn-link" data-i18n="legal.openTerms"></button>
@@ -397,17 +396,6 @@ document.documentElement.classList.add('js-loaded');
     </div>
 </div>
 
-<!-- 游戏规则 -->
-<div id="rules-dialog" class="dialog" role="dialog" aria-modal="true" aria-labelledby="rules-dialog-title">
-    <div class="dialog-content rules-content">
-        <div class="dialog-header">
-            <h3 id="rules-dialog-title" data-i18n="settings.rulesDialogTitle"></h3>
-            <button class="close-btn" data-close="rules-dialog" data-i18n-title="common.close">&times;</button>
-        </div>
-        <div id="rules-body" class="rules-body" aria-live="polite"></div>
-    </div>
-</div>
-
 <!-- 用户中心 -->
 <div id="user-dialog" class="dialog">
     <div class="dialog-content user-content">
@@ -553,6 +541,7 @@ document.documentElement.classList.add('js-loaded');
 <script src="langdata/en/documents-en.js?v=1.1.0"></script>
 
 <!-- 2. 核心层 -->
+<script src="js/core/safeStorage.js?v=1.1.0"></script>
 <script src="js/core/utils.js?v=1.1.0"></script>
 <script src="js/core/eventBus.js?v=1.1.0"></script>
 <script src="js/core/state.js?v=1.1.0"></script>

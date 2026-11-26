@@ -116,7 +116,7 @@ const RANDOM_EVENTS = [
         weight: 8,
         condition: null,
         effect: 'freeItem',
-        effectParam: { itemName: '普通肥料', count: 3 },
+        effectParam: { itemName: 'Normal Fertilizer', count: 3 },
     },
 
     {

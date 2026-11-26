@@ -62,7 +62,7 @@ const ACHIEVEMENTS = [
     { id:29,  name:'稻谷飘香',       icon:'🍚',  category:'harvest', hidden:false, description:'累计收获 100 个水稻',         condition:'cropHarvest',  conditionParam:{ name:'水稻', count:100 } },
     { id:30,  name:'小麦帝国',       icon:'🌾',  category:'harvest', hidden:false, description:'累计收获 1,000 个小麦',       condition:'cropHarvest',  conditionParam:{ name:'小麦', count:1000 } },
     { id:31,  name:'南瓜之王',       icon:'🎃',  category:'harvest', hidden:false, description:'累计收获 500 个南瓜',         condition:'cropHarvest',  conditionParam:{ name:'南瓜', count:500 } },
-    { id:32,  name:'西瓜大亨',       icon:'🍉',  category:'harvest', hidden:false, description:'累计收获 500 个西瓜',         condition:'cropHarvest',  conditionParam:{ name:'西瓜', count:500 } },
+    { id:32,  name:'冬瓜大亨',       icon:'🥒',  category:'harvest', hidden:false, description:'累计收获 500 个冬瓜',         condition:'cropHarvest',  conditionParam:{ name:'冬瓜', count:500 } },
     { id:33,  name:'草莓控',         icon:'🍓',  category:'harvest', hidden:false, description:'累计收获 1,000 个草莓',       condition:'cropHarvest',  conditionParam:{ name:'草莓', count:1000 } },
     { id:34,  name:'蓝莓爱好者',     icon:'🫐',  category:'harvest', hidden:false, description:'累计收获 500 个蓝莓',         condition:'cropHarvest',  conditionParam:{ name:'蓝莓', count:500 } },
     { id:35,  name:'蘑菇猎人',       icon:'🍄',  category:'harvest', hidden:false, description:'累计收获 500 个菌类',         condition:'categoryHarvest', conditionParam:{ category:'mushroom', count:500 } },

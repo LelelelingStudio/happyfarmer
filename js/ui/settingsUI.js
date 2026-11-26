@@ -130,10 +130,6 @@ function renderSettings() {
         <div class="settings-section">
             <div class="settings-section-title">${t('settings.other')}</div>
             <div class="settings-item">
-                <div class="settings-item-label">${t('settings.rules')}</div>
-                <div class="settings-control"><button class="btn btn-small" id="settings-rules-btn">${t('settings.viewRules')}</button></div>
-            </div>
-            <div class="settings-item">
                 <div class="settings-item-label">${t('legal.eula')}</div>
                 <div class="settings-control"><button class="btn btn-small" id="settings-eula-btn">${t('legal.openEula')}</button></div>
             </div>
@@ -223,9 +219,6 @@ function renderSettings() {
         const ok = await resetSave(true);
         if (ok) { location.reload(); }
     };
-    const rulesBtn = document.getElementById('settings-rules-btn');
-    if (rulesBtn) rulesBtn.onclick = () => openRulesDialog();
-
     /* 返回标题界面：下次启动显示起始选择弹窗（不会删除存档） */
     const titleBtn = document.getElementById('settings-title-btn');
     if (titleBtn) {
@@ -233,7 +226,7 @@ function renderSettings() {
             const ok = await showConfirm(t('settings.backToTitle'), t('settings.backToTitleBody'));
             if (!ok) return;
             try {
-                localStorage.setItem(FORCE_START_SCREEN_KEY, '1');
+                HFStorage.setItem(FORCE_START_SCREEN_KEY, '1');
                 if (typeof saveGame === 'function') saveGame(true);
             } catch (e) { /* ignore */ }
             location.reload();
@@ -332,50 +325,16 @@ function markdownToHtml(markdown) {
     }).join('');
 }
 
-async function openRulesDialog() {
-    const dialog = document.getElementById('rules-dialog');
-    const heading = document.getElementById('rules-dialog-title');
-    const body = document.getElementById('rules-body');
-    if (!dialog || !heading || !body) {
-        console.error('[rules] Game rules dialog is missing from the page.');
+/* 玩法说明已并入用户协议（EULA）：直接打开 legal.html?doc=1。
+   旧的 rules-*.json fetch 在 file:// / itch.io iframe 下会被 CORS 拦截，
+   因此不再保留独立规则文档与网络请求。 */
+function openRulesDialog() {
+    if (typeof openEulaDialog === 'function') {
+        openEulaDialog();
         return;
     }
-
-    dialog.classList.add('show');
-    body.setAttribute('aria-busy', 'true');
-    body.textContent = t('settings.loadingRules');
-
-    const locale = (typeof currentLegalLang === 'function')
-        ? currentLegalLang()
-        : (String(window.currentLocale || '').startsWith('zh') ? 'zh' : 'en');
-    const folder = locale === 'zh' ? 'ch' : 'en';
-
-    try {
-        const response = await fetch(`langdata/${folder}/rules-${folder}.json`);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-        const rules = await response.json();
-        if (!rules || typeof rules.content !== 'string' || !rules.content.trim()) {
-            throw new Error('Rules document has no content.');
-        }
-
-        heading.textContent = rules.title || t('settings.rulesDialogTitle');
-        body.innerHTML = markdownToHtml(rules.content);
-    } catch (error) {
-        console.error(`[rules] Could not load ${folder} rules.`, error);
-        const documents = window.DOCUMENT_PACKS && window.DOCUMENT_PACKS[locale];
-        const fallback = documents && documents.eula;
-        heading.textContent = t('settings.rulesDialogTitle');
-
-        if (fallback && typeof fallback.content === 'string') {
-            body.innerHTML = `<p class="rules-load-warning" role="alert">${t('settings.rulesLoadFailed')}</p>`
-                + markdownToHtml(fallback.content);
-        } else {
-            body.textContent = t('settings.rulesUnavailable');
-        }
-    } finally {
-        body.removeAttribute('aria-busy');
-    }
+    const locale = String(window.currentLocale || '').startsWith('zh') ? 'zh' : 'en';
+    window.location.href = 'legal.html?doc=1&lang=' + encodeURIComponent(locale);
 }
 
 /* -------- 用户中心 -------- */
@@ -510,8 +469,6 @@ function renderUserAvatar() {
 function initSettingsUI() {
     const closeBtn = document.querySelector('#settings-dialog .close-btn');
     if (closeBtn) closeBtn.onclick = closeSettings;
-    const closeRules = document.querySelector('#rules-dialog .close-btn');
-    if (closeRules) closeRules.onclick = () => document.getElementById('rules-dialog').classList.remove('show');
     const closeUser = document.querySelector('#user-dialog .close-btn');
     if (closeUser) closeUser.onclick = () => document.getElementById('user-dialog').classList.remove('show');
 

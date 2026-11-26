@@ -215,7 +215,7 @@ You may stop using the game at any time by clearing your browser data. We may al
 
 ## 11. Governing Law
 
-These terms are governed by the laws of the People's Republic of China (if you use the game in mainland China).
+These terms are governed by applicable law. Nothing here removes any rights you have under the mandatory laws of your place of residence.
 
 ## 12. Contact
 

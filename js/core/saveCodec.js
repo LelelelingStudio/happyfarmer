@@ -5,8 +5,8 @@
    （挡不住会读代码的人，这是既定取舍。）
 
    编码顺序（三层）：
-     1) 字符反转：整段文本倒序
-     2) Unicode 偏移：每个码元 +1（用 UTF-16 码元，保证可逆）
+     1) 字符反转：按 Unicode 码点整段倒序
+     2) Unicode 偏移：每个码点 +1（BMP 字符结果与旧版「码元 +1」完全一致）
      3) Base64（UTF-8 安全版）：再反转一次
 
    解码就是完全逆序执行。
@@ -16,6 +16,11 @@
       这类字符；而且如果先对含中文/emoji 的 JSON 直接反转，会切碎代理对
       （surrogate pair），存回去就变成非法字符串。
       所以这里用 UTF-8 → base64 的安全组合，保证任何内容都能往返。
+
+   ⚠️ 码点 vs 码元：旧实现对 UTF-16 码元逐个 +1，遇到非 BMP 字符（如 🏿）
+      会产生孤立高代理，encodeURIComponent 抛错后退化到 TextEncoder，
+      最终把该字符替换成 U+FFFD，导致含此类 emoji 的昵称/内容损坏。
+      现改为按码点位移修复该问题；BMP 字符结果不变，旧存档仍可解码。
    ============================================================ */
 
 const SAVE_CODEC_PREFIX = 'HF1:';   /* 编码后的存档以此开头，用来区分旧版明文 JSON */
@@ -56,11 +61,15 @@ function reverseString(str) {
     return Array.from(str).reverse().join('');
 }
 
-/** 2) 每个码元 +1 / -1 */
+/** 2) 每个 Unicode 码点 +1 / -1（BMP 字符与旧版码元实现结果一致） */
 function shiftCodeUnits(str, delta) {
     let out = '';
-    for (let i = 0; i < str.length; i++) {
-        out += String.fromCharCode(str.charCodeAt(i) + delta);
+    for (const ch of str) {
+        const shifted = ch.codePointAt(0) + delta;
+        /* 极端边界：位移后落在代理区或超出 Unicode 范围时保持原样，避免产生非法字符串 */
+        out += (shifted >= 0 && shifted <= 0x10FFFF && !(shifted >= 0xD800 && shifted <= 0xDFFF))
+            ? String.fromCodePoint(shifted)
+            : ch;
     }
     return out;
 }
@@ -117,6 +126,8 @@ function selfTestSaveCodec() {
         { emoji: '🌱🥕🐼', nested: { x: '测试', y: null } },
         { n: 1.5, s: 'quote"and\\backslash', arr: [{ k: '值' }] },
         { big: 'x'.repeat(5000) },
+        /* 非 BMP 码点：肤色修饰符与 ZWJ 组合，旧实现会被替换成 U+FFFD */
+        { emoji: 'skin🏿tone family 👨‍👩‍👧‍👦', note: 'non-BMP' },
     ];
     for (const s of samples) {
         const enc = encodeSave(s);

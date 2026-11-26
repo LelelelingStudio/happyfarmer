@@ -74,7 +74,7 @@
         });
         document.body.appendChild(toggleBtn);
 
-        enabled = localStorage.getItem(STORAGE_KEY) !== 'off';
+        enabled = HFStorage.getItem(STORAGE_KEY) !== 'off';
         setEnabled(enabled);
         place(x, y, false);
     }
@@ -82,7 +82,7 @@
     function setEnabled(value) {
         enabled = !!value;
         document.body.classList.toggle('farmer-guide-off', !enabled);
-        localStorage.setItem(STORAGE_KEY, enabled ? 'on' : 'off');
+        HFStorage.setItem(STORAGE_KEY, enabled ? 'on' : 'off');
         if (toggleBtn) {
             toggleBtn.textContent = enabled
                 ? text('farmerGuide.on', '🧑‍🌾 向导开启')

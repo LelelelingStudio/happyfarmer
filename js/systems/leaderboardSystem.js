@@ -5,6 +5,8 @@
    · 5 级解锁；首次打开引导选择公开/匿名
    · 升级自动提交；手动提交每 5 游戏日一次
    · 自定义上传头像永不上传
+   · 可选联网功能： Worker 不可达 / CORS 被拦截时全部调用静默失败，
+     单机玩法不依赖排行榜，隐私政策已披露该项外部请求
    ============================================================ */
 
 /* ---------- 配置 ---------- */
@@ -44,7 +46,7 @@ function ensurePlayerId() {
         gameState.user.userId = 'user_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
         if (typeof markDirty === 'function') markDirty();
     }
-    try { localStorage.setItem('farm_player_id', gameState.user.userId); } catch (e) { /* ignore */ }
+    try { HFStorage.setItem('farm_player_id', gameState.user.userId); } catch (e) { /* ignore */ }
     return gameState.user.userId;
 }
 
@@ -67,7 +69,7 @@ function getLeaderboardPref() {
 
 function saveLeaderboardPref() {
     const p = getLeaderboardPref();
-    try { localStorage.setItem('farm_leaderboard_pref', JSON.stringify(p)); } catch (e) { /* ignore */ }
+    try { HFStorage.setItem('farm_leaderboard_pref', JSON.stringify(p)); } catch (e) { /* ignore */ }
     if (typeof markDirty === 'function') markDirty();
 }
 

@@ -11,7 +11,6 @@ const SAVE_INTERVAL_MS = 30000;
 const SAVE_DEBOUNCE_MS = 5000;
 const SAVE_SIZE_WARN = 4.5 * 1024 * 1024;
 const SAVE_SIZE_MAX  = 5.0 * 1024 * 1024;
-const SAVE_COMPRESSION = true;
 const SAVE_WARN_BEFORE_LEAVE = true;
 const SAVE_AVATAR_KEY = 'farm_user_avatar';
 const SAVE_META_KEY = 'farm_user_meta';

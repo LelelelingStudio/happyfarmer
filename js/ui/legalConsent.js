@@ -14,7 +14,7 @@
 
     function readConsent() {
         try {
-            const raw = localStorage.getItem(key());
+            const raw = HFStorage.getItem(key());
             if (!raw) return null;
             const data = JSON.parse(raw);
             return (data && data.accepted === true && data.version === version()) ? data : null;
@@ -29,7 +29,7 @@
 
     window.grantLegalConsent = function grantLegalConsent() {
         try {
-            localStorage.setItem(key(), JSON.stringify({
+            HFStorage.setItem(key(), JSON.stringify({
                 accepted: true,
                 version: version(),
                 at: Date.now(),
@@ -38,7 +38,7 @@
     };
 
     window.revokeLegalConsent = function revokeLegalConsent() {
-        try { localStorage.removeItem(key()); } catch (e) { /* ignore */ }
+        try { HFStorage.removeItem(key()); } catch (e) { /* ignore */ }
     };
 
     window.showLegalConsentRequired = function showLegalConsentRequired() {

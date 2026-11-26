@@ -796,8 +796,8 @@ function applyI18n(root = document) {
 /* 一次性标记的读写（切语言刷新、返回标题界面都用它） */
 function _consumeOneShotFlag(key) {
     try {
-        if (localStorage.getItem(key)) {
-            localStorage.removeItem(key);
+        if (HFStorage.getItem(key)) {
+            HFStorage.removeItem(key);
             return true;
         }
     } catch (e) { /* ignore */ }
@@ -823,7 +823,12 @@ function _initStartScreen() {
     const hasSave = (typeof hasLocalSave === 'function') && hasLocalSave();
 
     if (skipStart && hasSave) {
-        /* 切语言后的自动续玩：不打扰玩家 */
+        /* 切语言后的自动续玩：不打扰玩家，但仍必须先完成法律同意 */
+        if (typeof hasLegalConsent === 'function' && !hasLegalConsent()) {
+            showStartScreen();
+            if (typeof ensureLegalConsent === 'function') ensureLegalConsent();
+            return;
+        }
         hideStartScreen();
         startGameSession();
         return;

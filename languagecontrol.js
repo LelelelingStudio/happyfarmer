@@ -195,7 +195,7 @@
 
     function getStoredLanguagePreference() {
         try {
-            const v = localStorage.getItem(LANG_PREF_KEY);
+            const v = HFStorage.getItem(LANG_PREF_KEY);
             if (v === 'zh' || v === 'en' || v === 'auto') return v;
         } catch (e) { /* ignore */ }
         return null;
@@ -203,7 +203,7 @@
 
     function setStoredLanguagePreference(value) {
         try {
-            localStorage.setItem(LANG_PREF_KEY, value === 'en' ? 'en' : (value === 'zh' ? 'zh' : 'auto'));
+            HFStorage.setItem(LANG_PREF_KEY, value === 'en' ? 'en' : (value === 'zh' ? 'zh' : 'auto'));
         } catch (e) { /* ignore */ }
     }
 
@@ -225,7 +225,7 @@
 
         try {
             /* 1. 其次从存档读取 */
-            const saveRaw = localStorage.getItem(typeof SAVE_KEY !== 'undefined' ? SAVE_KEY : 'farm_game_save_v1');
+            const saveRaw = HFStorage.getItem(typeof SAVE_KEY !== 'undefined' ? SAVE_KEY : 'farm_game_save_v1');
             if (saveRaw) {
                 /* 存档是加密的（或旧版明文），用 decodeSave 解；解不开再退回 JSON.parse */
                 let parsed = (typeof decodeSave === 'function') ? decodeSave(saveRaw) : null;
@@ -487,7 +487,7 @@
                 if (typeof saveGame === 'function') saveGame(true);
             } catch (e) { /* ignore */ }
             /* 一次性标记：刷新后直接续玩，不再弹起始选择框 */
-            try { localStorage.setItem(SKIP_START_SCREEN_KEY, '1'); } catch (e) { /* ignore */ }
+            try { HFStorage.setItem(SKIP_START_SCREEN_KEY, '1'); } catch (e) { /* ignore */ }
             /* 轻量遮罩，刷新后自动续玩（不再回到开始页） */
             try {
                 const overlay = document.getElementById('lang-switch-overlay');

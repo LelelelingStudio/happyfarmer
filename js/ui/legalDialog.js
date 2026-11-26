@@ -1,5 +1,5 @@
 /* ============================================================
-   legalDialog.js  —  法律文档与游戏规则入口
+   legalDialog.js  —  法律文档入口
    版本：v1.1.0
    ------------------------------------------------------------
    文档由独立页面 legal.html?doc=1/2/3 提供（可公开直链、离线可读）。
@@ -38,14 +38,12 @@ function initLegalDialog() {
     };
 
     bind('start-rules-btn', openEulaDialog);
-    bind('start-game-rules-btn', openRulesDialog);
     bind('start-privacy-btn', openPrivacyDialog);
     bind('start-terms-btn', openTermsDialog);
     bind('consent-eula-btn', openEulaDialog);
     bind('consent-privacy-btn', openPrivacyDialog);
     bind('consent-terms-btn', openTermsDialog);
 
-    bind('settings-rules-btn', openRulesDialog);
     bind('settings-eula-btn', openEulaDialog);
     bind('settings-privacy-btn', openPrivacyDialog);
     bind('settings-terms-btn', openTermsDialog);

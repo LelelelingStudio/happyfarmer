@@ -240,7 +240,7 @@ const SKINS = [
         name: 'Deep Sea Sanctuary',
         icon: '🐚',
         levelRequired: 115,
-        description: 'A deep,幽 blue abyss of the ocean',
+        description: 'A deep, mysterious blue abyss of the ocean',
         cssVars: {
             '--c-primary':        '#0277bd',
             '--c-primary-dark':   '#01579b',

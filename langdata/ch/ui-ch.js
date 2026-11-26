@@ -414,6 +414,17 @@ const LANG_CH = {
             rules: '游戏规则文档',
             till: '翻土',
         },
+        emptyState: {
+            noItems: '暂无物品',
+            emptyInventory: '仓库是空的',
+            noConsignments: '暂无寄卖物品',
+            noMerchantItems: '商人暂无收购物品',
+            noFactory: '暂无可加工产品',
+            noProcessing: '暂无正在加工的产品',
+            noCompleted: '暂无已完成的产品',
+            noAchievement: '暂无成就',
+            noMall: '该分类暂无商品',
+        },
     },
     hud: {
         ready: '准备就绪',
