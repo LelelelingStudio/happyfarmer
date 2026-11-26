@@ -27,7 +27,7 @@ assets/
 在项目根目录执行：
 
 ```bash
-zip -r happy-farmer-v1.1.0.zip \
+zip -r happy-farmer-v1.2.0.zip \
   index.html legal.html languagecontrol.js \
   css js langdata assets \
   -x '*/.*' '*/.DS_Store' '*Thumbs.db'
@@ -36,7 +36,7 @@ zip -r happy-farmer-v1.1.0.zip \
 校验根目录结构：
 
 ```bash
-unzip -l happy-farmer-v1.1.0.zip | head -20
+unzip -l happy-farmer-v1.2.0.zip | head -20
 ```
 
 全部资源使用相对路径加载，兼容 itch.io iframe 子路径与本地 `file://` 打开。`assets/manifest.js` 已包含 `legal.html` 与 `css/legal.css`，无 `admin.html` 残留。
