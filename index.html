@@ -32,16 +32,34 @@
     <link rel="stylesheet" href="css/tillgame.css?v=1.1.0">
     <link rel="stylesheet" href="css/mobile.css?v=1.1.0">
     <link rel="stylesheet" href="css/main.css?v=1.1.0">
+    <link rel="stylesheet" href="css/farmerGuide.css?v=1.1.0">
 
 </head>
 <body>
 
 <div id="loading-screen">
-    <div class="loading-title">🌱 <span data-i18n="app.title"></span></div>
-    <div class="loading-spinner"></div>
+    <div class="loading-title">🌱 <span data-i18n="app.title">Happy Farmer</span></div>
+
+    <div class="loading-farm-scene" aria-hidden="true">
+        <div class="loading-sun"></div>
+        <div class="loading-cloud cloud-a"></div>
+        <div class="loading-cloud cloud-b"></div>
+        <div class="loading-hill"></div>
+        <div class="loading-field">
+            <div class="loading-wheat-row row-back"></div>
+            <div class="loading-wheat-row row-front"></div>
+            <div class="loading-shout" id="loading-shout"></div>
+            <div class="loading-farmer"><span class="farmer-face">🧑‍🌾</span><span class="farmer-tool">🪓</span></div>
+        </div>
+    </div>
+
     <div id="loading-status" class="loading-status" data-i18n="loader.stageHtml"></div>
-    <div class="loading-progress-bar">
-        <div id="loading-progress-fill" class="loading-progress-fill"></div>
+    <div class="loading-progress-wrap">
+        <div class="loading-progress-bar">
+            <div id="loading-progress-fill" class="loading-progress-fill"></div>
+            <div class="loading-progress-half"></div>
+        </div>
+        <div class="loading-progress-scale"><span>0%</span><span>50%</span><span>100%</span></div>
     </div>
     <div id="loading-percent" class="loading-percent">0.0%</div>
     <div class="loading-version">v1.1.0</div>
@@ -594,6 +612,7 @@ document.documentElement.classList.add('js-loaded');
 <script src="js/ui/currencyDialog.js?v=1.1.0"></script>
 <script src="js/ui/legalConsent.js?v=1.1.0"></script>
 <script src="js/ui/legalDialog.js?v=1.1.0"></script>
+<script src="js/ui/farmerGuide.js?v=1.1.0"></script>
 
 <!-- 6. 入口（main.js bootstrap 会 await __dataReadyPromise）-->
 <script src="js/core/loader.js?v=1.1.0"></script>

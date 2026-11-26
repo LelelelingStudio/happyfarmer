@@ -4,6 +4,20 @@
    用于修正上面各文件之间的冲突，或加临时补丁
    ============================================================ */
 
+/* 弹窗必须高于移动端底部导航(8000)、ticker(9500) 与农夫向导(9502)。
+   原来 .dialog 只有 1000，手机端点底部导航弹出的加工厂/设置会被工具栏压住。 */
+.dialog {
+    z-index: 12000;
+}
+
+/* 弹窗打开时收起会遮挡内容的浮层，避免按钮/提示压在弹窗上 */
+body:has(.dialog.show) .mobile-toolbar,
+body:has(.dialog.show) #farmer-guide,
+body:has(.dialog.show) #farmer-guide-toggle,
+body:has(.dialog.show) #farmer-guide-hint {
+    display: none;
+}
+
 /* 防止加载期间闪烁 */
 html {
     visibility: hidden;
@@ -15,6 +29,35 @@ html.js-loaded {
 
 body.game-started .container {
     display: block;
+}
+
+/* Inspector 等平台把 iframe 设为 scrolling="no"，页面级滚动无效；
+   改成游戏容器内部滚动，鼠标滚轮 / 触摸都能上下滑动。 */
+html,
+body {
+    height: 100%;
+}
+
+body {
+    overflow: hidden;
+}
+
+body.game-started .container {
+    height: 100vh;
+    height: 100dvh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    scrollbar-color: var(--c-primary-lighter) transparent;
+    scrollbar-width: thin;
+}
+
+body.game-started .container::-webkit-scrollbar { width: 8px; }
+body.game-started .container::-webkit-scrollbar-thumb {
+    background: var(--c-primary-lighter);
+    border-radius: 999px;
 }
 
 body.game-started #start-screen {
@@ -423,29 +466,288 @@ body.game-started #start-screen {
     padding: 0 20px;
 }
 
+/* ---------- 加载农场小剧场：农夫割麦 → 回头发现麦子又长回来了 ---------- */
+.loading-farm-scene {
+    position: relative;
+    width: min(560px, 88vw);
+    height: 150px;
+    border-radius: 22px;
+    overflow: hidden;
+    background: linear-gradient(180deg, #dceef8 0%, #f7f6ef 62%, #edf3e8 100%);
+    border: 2px solid rgba(47, 125, 79, 0.18);
+    box-shadow: 0 14px 34px rgba(31, 95, 58, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.loading-sun {
+    position: absolute;
+    right: 26px;
+    top: 16px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #fff3b0, #ffca4a);
+    box-shadow: 0 0 22px rgba(255, 202, 74, 0.65);
+    animation: loader-sun-pulse 2.4s ease-in-out infinite;
+}
+
+.loading-cloud {
+    position: absolute;
+    width: 70px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.88);
+    border-radius: 999px;
+}
+
+.loading-cloud::before,
+.loading-cloud::after {
+    content: '';
+    position: absolute;
+    background: inherit;
+    border-radius: 50%;
+}
+
+.loading-cloud::before { width: 28px; height: 28px; left: 12px; top: -12px; }
+.loading-cloud::after { width: 20px; height: 20px; right: 10px; top: -9px; }
+
+.cloud-a { top: 22px; left: -90px; animation: loader-cloud-drift 12s linear infinite; }
+.cloud-b { top: 48px; left: -140px; transform: scale(0.7); animation: loader-cloud-drift 17s linear 3s infinite; }
+
+.loading-hill {
+    position: absolute;
+    left: -5%;
+    right: -5%;
+    bottom: 34px;
+    height: 54px;
+    opacity: 0.9;
+    background:
+        radial-gradient(ellipse at 30% 100%, #b6d69a 0 60%, transparent 61%),
+        radial-gradient(ellipse at 75% 100%, #a8cf8c 0 58%, transparent 59%);
+}
+
+.loading-field {
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    bottom: 12px;
+    height: 56px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #c9e2ad, #e8d9a8);
+    box-shadow: inset 0 -8px 0 rgba(122, 86, 40, 0.12);
+}
+
+.loading-wheat-row {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 40px;
+    overflow: hidden;
+}
+
+.wheat-stalk {
+    position: absolute;
+    bottom: 0;
+    width: 24px;
+    height: 40px;
+    transform: translateX(-50%);
+}
+
+.wheat-stalk .sprout,
+.wheat-stalk .grown {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform-origin: 50% 100%;
+    white-space: nowrap;
+    transition: opacity 0.22s ease, transform 0.4s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+.wheat-stalk .sprout { font-size: 17px; opacity: 0; transform: translateX(-50%) scale(0.55); }
+.wheat-stalk .grown  { font-size: 22px; opacity: 1; transform: translateX(-50%) scale(1); }
+
+/* 被砍：旋转倒下并掉出田埂（父级 overflow:hidden 会把它裁掉） */
+.wheat-stalk.cut .grown {
+    opacity: 0;
+    transform: translateX(-50%) rotate(78deg) translateY(30px) scale(0.8);
+}
+
+.wheat-stalk.cut .sprout { opacity: 0; }
+
+/* 重新长出：先 🌱 冒头，再慢慢长成 🌾 */
+.wheat-stalk.regrowing .sprout {
+    opacity: 1;
+    animation: loader-sprout-pop 0.75s ease-out both;
+}
+
+.wheat-stalk.regrowing .grown {
+    opacity: 0;
+    animation: loader-wheat-grow 0.75s 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
+}
+
+.row-back { bottom: 16px; opacity: 0.45; filter: blur(1px); }
+.row-front { bottom: 2px; }
+
+.loading-farmer {
+    position: absolute;
+    bottom: 4px;
+    left: var(--farmer-x, 0%);
+    transform: translateX(-50%);
+    transition: left 0.18s linear;
+    z-index: 3;
+    filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.2));
+}
+
+.farmer-face {
+    display: inline-block;
+    font-size: 30px;
+    animation: loader-farmer-run 0.55s ease-in-out infinite;
+}
+
+.farmer-tool {
+    position: absolute;
+    right: -12px;
+    top: -2px;
+    font-size: 18px;
+    transform-origin: bottom left;
+    animation: loader-hoe-swing 0.55s ease-in-out infinite;
+}
+
+#loading-screen.returning .farmer-face { transform: scaleX(-1); }
+#loading-screen.returning .farmer-tool { right: auto; left: -12px; transform-origin: bottom right; }
+
+.loading-shout {
+    position: absolute;
+    bottom: 54px;
+    left: var(--farmer-x, 50%);
+    transform: translateX(-50%) scale(0.8);
+    padding: 5px 10px;
+    border-radius: 12px;
+    background: #fff;
+    color: var(--c-primary-dark);
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    z-index: 4;
+    pointer-events: none;
+}
+
+.loading-shout::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -6px;
+    width: 10px;
+    height: 10px;
+    background: #fff;
+    transform: translateX(-50%) rotate(45deg);
+}
+
+#loading-screen.shout .loading-shout { opacity: 1; transform: translateX(-50%) scale(1); }
+
+/* ---------- 放大的进度条 ---------- */
+.loading-progress-wrap { width: min(560px, 88vw); }
+
 .loading-progress-bar {
-    width: min(420px, 78vw);
-    height: 14px;
-    background-color: rgba(255, 255, 255, 0.7);
+    position: relative;
+    width: 100%;
+    height: 24px;
+    background-color: rgba(255, 255, 255, 0.8);
     border: 2px solid var(--c-primary-lighter);
     border-radius: var(--radius-round);
     overflow: hidden;
-    box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.08);
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.1), 0 6px 16px rgba(31, 95, 58, 0.12);
 }
 
 .loading-progress-fill {
     height: 100%;
     width: 0;
-    background: linear-gradient(90deg, var(--c-primary-light), var(--c-primary));
     border-radius: var(--radius-round);
-    transition: width 0.25s ease-out;
+    background: repeating-linear-gradient(
+        135deg,
+        var(--c-primary) 0 14px,
+        var(--c-primary-dark) 14px 28px
+    );
+    background-size: 40px 40px;
+    animation: loader-stripes 0.7s linear infinite;
+    transition: width 0.2s ease-out;
+}
+
+.loading-progress-half {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: rgba(255, 255, 255, 0.85);
+}
+
+.loading-progress-scale {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4px;
+    padding: 0 2px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--c-primary-dark);
+    opacity: 0.75;
 }
 
 .loading-percent {
-    font-size: 0.95rem;
+    font-size: 1.15rem;
     font-weight: 700;
     color: var(--c-primary-darker);
     font-variant-numeric: tabular-nums;
+}
+
+@keyframes loader-sun-pulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 22px rgba(255, 202, 74, 0.65); }
+    50% { transform: scale(1.08); box-shadow: 0 0 32px rgba(255, 202, 74, 0.9); }
+}
+
+@keyframes loader-cloud-drift {
+    from { transform: translateX(0); }
+    to { transform: translateX(760px); }
+}
+
+@keyframes loader-farmer-run {
+    0%, 100% { transform: translateY(0) rotate(-4deg); }
+    50% { transform: translateY(-5px) rotate(4deg); }
+}
+
+@keyframes loader-hoe-swing {
+    0%, 100% { transform: rotate(-25deg); }
+    50% { transform: rotate(35deg); }
+}
+
+@keyframes loader-sprout-pop {
+    0%   { opacity: 0;   transform: translateX(-50%) scale(0.3); }
+    35%  { opacity: 1;   transform: translateX(-50%) scale(0.7); }
+    70%  { opacity: 1;   transform: translateX(-50%) scale(1); }
+    100% { opacity: 0;   transform: translateX(-50%) scale(1.15); }
+}
+
+@keyframes loader-wheat-grow {
+    0%   { opacity: 0; transform: translateX(-50%) scale(0.35); }
+    60%  { opacity: 1; transform: translateX(-50%) scale(1.12); }
+    100% { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+@keyframes loader-stripes {
+    from { background-position: 0 0; }
+    to { background-position: 40px 0; }
+}
+
+@media (max-height: 520px) {
+    #loading-screen { gap: 8px; }
+    .loading-farm-scene { height: 96px; }
+    .loading-field { height: 44px; }
+    .wheat-stalk .grown { font-size: 17px; }
+    .wheat-stalk .sprout { font-size: 13px; }
+    .farmer-face { font-size: 24px; }
+    .loading-shout { bottom: 42px; font-size: 10px; }
+    .loading-progress-bar { height: 18px; }
 }
 
 .loading-version {
@@ -455,10 +757,12 @@ body.game-started #start-screen {
     font-variant-numeric: tabular-nums;
 }
 
-/* 加载失败：保留遮罩并给出明确重试入口 */
-#loading-screen.error .loading-spinner {
+/* 加载失败：农夫停下，保留遮罩并给出明确重试入口 */
+#loading-screen.error .farmer-face,
+#loading-screen.error .farmer-tool,
+#loading-screen.error .loading-progress-fill {
     animation-play-state: paused;
-    border-top-color: var(--c-danger, #B42318);
+    filter: grayscale(0.8);
 }
 
 #loading-screen.error .loading-status {

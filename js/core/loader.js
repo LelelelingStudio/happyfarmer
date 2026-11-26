@@ -32,7 +32,7 @@ const LOADER_STAGE_LABEL = {
     other:    'loader.stageOther',
 };
 
-const LOADER_IMAGE_CONCURRENCY = 6;      /* 本地图片并发预取 */
+const LOADER_IMAGE_CONCURRENCY = 12;     /* 本地图片并发预取（提高以缩短首屏等待） */
 const LOADER_MIN_VISIBLE_MS = 900;       /* 进度条至少可见时间，避免一闪而过 */
 const LOADER_SCRIPT_TIMEOUT_MS = 15000;  /* CSS / 主脚本等待上限 */
 const LOADER_DATA_TIMEOUT_MS = 15000;    /* 语言数据等待上限 */
@@ -72,11 +72,86 @@ function _loaderText(key, fallback) {
     }
 }
 
+/** 生成逐株可控制的麦子，替换静态 emoji 字符串 */
+function _loaderBuildWheat() {
+    const rows = document.querySelectorAll('.loading-wheat-row');
+    if (!rows.length) return;
+    rows.forEach((row) => {
+        if (row.childElementCount) return;
+        const count = 13;
+        for (let i = 0; i < count; i++) {
+            const pos = ((i + 0.5) / count * 100).toFixed(2);
+            const stalk = document.createElement('span');
+            stalk.className = 'wheat-stalk';
+            stalk.dataset.pos = pos;
+            stalk.style.left = pos + '%';
+            stalk.innerHTML = '<span class="sprout">🌱</span><span class="grown">🌾</span>';
+            row.appendChild(stalk);
+        }
+    });
+}
+
+/** 农夫走过的麦子砍倒掉落；回头时身后的麦子从 🌱 逐株长成 🌾 */
+function _loaderUpdateWheat(farmerX, returning, value) {
+    const stalks = document.querySelectorAll('.wheat-stalk');
+    if (!stalks.length) return;
+    if (value <= 1) {
+        stalks.forEach((stalk) => {
+            delete stalk.dataset.regrown;
+            delete stalk.dataset.state;
+            stalk.classList.remove('cut', 'regrowing');
+            clearTimeout(stalk._regrowTimer);
+        });
+    }
+    stalks.forEach((stalk) => {
+        const pos = parseFloat(stalk.dataset.pos) || 0;
+        const shouldCut = pos <= farmerX;
+        let state = shouldCut ? 'cut' : (returning ? 'regrowing' : 'whole');
+        if (returning && stalk.dataset.regrown === '1') state = 'whole';
+        if (stalk.dataset.state === state) return;
+
+        stalk.dataset.state = state;
+        stalk.classList.toggle('cut', state === 'cut');
+        stalk.classList.toggle('regrowing', state === 'regrowing');
+
+        if (state === 'regrowing') {
+            clearTimeout(stalk._regrowTimer);
+            stalk._regrowTimer = setTimeout(() => {
+                if (stalk.dataset.state !== 'regrowing') return;
+                stalk.dataset.regrown = '1';
+                stalk.dataset.state = 'whole';
+                stalk.classList.remove('regrowing');
+            }, 120 + (pos - farmerX) * 14);
+        } else if (state === 'cut') {
+            delete stalk.dataset.regrown;
+            clearTimeout(stalk._regrowTimer);
+        }
+    });
+}
+
 function _loaderSetProgress(percent, stageKey) {
-    const { fill, percent: pctEl, status } = _loaderEls();
+    const { screen, fill, percent: pctEl, status } = _loaderEls();
     const value = Math.max(0, Math.min(100, percent));
     if (fill) fill.style.width = value.toFixed(2) + '%';
     if (pctEl) pctEl.textContent = value.toFixed(1) + '%';
+    if (screen) {
+        /* 0→50 从左割到右；50→100 回头发现麦子长回来了，再割回起点 */
+        const rawX = value <= 50 ? value * 2 : (100 - value) * 2;
+        const farmerX = Math.max(4, Math.min(96, rawX));
+        screen.style.setProperty('--farmer-x', farmerX.toFixed(2) + '%');
+        screen.classList.toggle('returning', value > 50);
+        screen.classList.toggle('shout', value >= 48 && value <= 66);
+        _loaderUpdateWheat(farmerX, value > 50, value);
+        const shout = document.getElementById('loading-shout');
+        if (shout) {
+            const fallbackZh = (document.documentElement.lang || '').indexOf('zh') === 0;
+            const shoutText = _loaderText(
+                'loader.shout',
+                fallbackZh ? '啊！麦子又长回来了' : 'Oh! The wheat grew back!'
+            );
+            if (shout.textContent !== shoutText) shout.textContent = shoutText;
+        }
+    }
     if (stageKey) {
         window.__assetLoad.stage = stageKey;
         if (status && !status.dataset.loaderError) {
@@ -405,7 +480,8 @@ async function runAssetLoading() {
     return _loaderRunning;
 }
 
-/* 脚本一执行就把初始状态写出来（不必等数据文件就绪） */
+/* 脚本一执行就建好麦子并写出初始状态（不必等数据文件就绪） */
+_loaderBuildWheat();
 if (typeof t === 'function') _loaderSetProgress(0, 'html');
 
 /* 若 main.js 因 404 / 语法错误未能启动，loader 自己跑起来，

@@ -12,6 +12,11 @@
    ============================================================ */
 
 const MESSAGES_EN = {
+    farmerGuide: {
+        on: '🧑‍🌾 Guide on',
+        off: '🧑‍🌾 Guide off',
+        hint: 'Stand still 2s to open',
+    },
     economy: {
         levelUpTitle: 'Level up!',
         levelUpBody: 'Congratulations, you reached level {level}',
@@ -198,6 +203,7 @@ Object.assign(MESSAGES_EN, {
         stageAudio: "Loading music and sound…",
         stageImages: "Loading images…",
         stageOther: "Finishing up…",
+        shout: "Oh! The wheat grew back!",
         errorTitle: "Some required resources could not be loaded.",
         errorRetry: "Retry loading",
         errorMissingManifest: "The asset list is missing. Please reload the page.",
