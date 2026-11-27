@@ -91,38 +91,59 @@ function _loaderBuildWheat() {
     });
 }
 
-/** 农夫走过的麦子砍倒掉落；回头时身后的麦子从 🌱 逐株长成 🌾 */
+/**
+ * 麦子状态机（按进度驱动，不依赖计时器）：
+ *   0→50  农夫向右割：pos <= farmerX 的麦子 cut，其余 whole
+ *   50→100 回头重割：全部麦子先整批进入 regrowing（🌱→🌾 逐个长出），
+ *          长齐后农夫向左走，pos >= farmerX 的麦子 cut，其余 whole
+ * 关键：回头时「已走过」的是右侧（pos >= farmerX），判定方向必须反转，
+ *       而且 regrowing 只发生一次，不能每帧把长好的麦子重新设为生长中。
+ */
 function _loaderUpdateWheat(farmerX, returning, value) {
     const stalks = document.querySelectorAll('.wheat-stalk');
     if (!stalks.length) return;
+
     if (value <= 1) {
         stalks.forEach((stalk) => {
-            delete stalk.dataset.regrown;
             delete stalk.dataset.state;
+            delete stalk.dataset.regrown;
+            delete stalk.dataset.regrowTriggered;
             stalk.classList.remove('cut', 'regrowing');
             clearTimeout(stalk._regrowTimer);
         });
     }
-    stalks.forEach((stalk) => {
-        const pos = parseFloat(stalk.dataset.pos) || 0;
-        const shouldCut = pos <= farmerX;
-        let state = shouldCut ? 'cut' : (returning ? 'regrowing' : 'whole');
-        if (returning && stalk.dataset.regrown === '1') state = 'whole';
-        if (stalk.dataset.state === state) return;
 
-        stalk.dataset.state = state;
-        stalk.classList.toggle('cut', state === 'cut');
-        stalk.classList.toggle('regrowing', state === 'regrowing');
-
-        if (state === 'regrowing') {
+    /* 刚过 50%：先把所有割掉的麦子一次性安排长回来，逐个从 🌱 变 🌾 */
+    if (returning && !stalks[0].dataset.regrowTriggered) {
+        stalks.forEach((stalk, i) => {
+            stalk.dataset.regrowTriggered = '1';
             clearTimeout(stalk._regrowTimer);
             stalk._regrowTimer = setTimeout(() => {
                 if (stalk.dataset.state !== 'regrowing') return;
                 stalk.dataset.regrown = '1';
                 stalk.dataset.state = 'whole';
                 stalk.classList.remove('regrowing');
-            }, 120 + (pos - farmerX) * 14);
-        } else if (state === 'cut') {
+            }, 80 + i * 45);
+            stalk.dataset.state = 'regrowing';
+            stalk.classList.remove('cut');
+            stalk.classList.add('regrowing');
+        });
+    }
+
+    stalks.forEach((stalk) => {
+        /* 生长动画期间由 timer 接管，农夫不提前割 */
+        if (returning && stalk.dataset.regrown !== '1') return;
+
+        const pos = parseFloat(stalk.dataset.pos) || 0;
+        /* 去程割左边，回程割右边——方向相反 */
+        const shouldCut = returning ? (pos >= farmerX) : (pos <= farmerX);
+        const state = shouldCut ? 'cut' : 'whole';
+        if (stalk.dataset.state === state) return;
+
+        stalk.dataset.state = state;
+        stalk.classList.toggle('cut', state === 'cut');
+        stalk.classList.remove('regrowing');
+        if (state === 'cut') {
             delete stalk.dataset.regrown;
             clearTimeout(stalk._regrowTimer);
         }
@@ -140,7 +161,8 @@ function _loaderSetProgress(percent, stageKey) {
         const farmerX = Math.max(4, Math.min(96, rawX));
         screen.style.setProperty('--farmer-x', farmerX.toFixed(2) + '%');
         screen.classList.toggle('returning', value > 50);
-        screen.classList.toggle('shout', value >= 48 && value <= 66);
+        /* 气泡只在刚回头、麦子长回来的一小段显示，别一路喊到 66% */
+        screen.classList.toggle('shout', value >= 50 && value <= 58);
         _loaderUpdateWheat(farmerX, value > 50, value);
         const shout = document.getElementById('loading-shout');
         if (shout) {

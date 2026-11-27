@@ -2,7 +2,7 @@
 
 ## 1. Package
 
-Use `happy-farmer-v1.2.0.zip` in this folder.
+Use `happy-farmer-v1.2.1.zip` in this folder.
 
 The ZIP is platform-neutral. `index.html` is at the archive root, so it can be uploaded to any static host or web-game portal that accepts a ZIP or a plain folder. The game uses only relative paths and works in an iframe subpath.
 
