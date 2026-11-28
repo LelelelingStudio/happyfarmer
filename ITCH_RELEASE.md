@@ -1,8 +1,8 @@
-# itch.io 发布清单 — Happy Farmer / 爱种地的农民 v1.1.0
+# itch.io 发布清单 — Happy Farmer / 爱种地的农民 v1.2.2
 
 出品：了了了岭工作室 · 了了了游（leleleling Studio · Lelelegame）  
 适龄：**Ages 6+ / 6 岁以上**  
-版本：`1.1.0`（`GAME_VERSION`、`SAVE_VERSION`、页面显示、资源缓存参数、存档 `saveVersion` 全部一致）
+版本：`1.2.2`（`GAME_VERSION`、页面显示、资源缓存参数一致；`SAVE_VERSION` 仍为 `1.1.0`，存档格式未变）
 
 ---
 
@@ -27,7 +27,7 @@ assets/
 在项目根目录执行：
 
 ```bash
-zip -r happy-farmer-v1.2.1.zip \
+zip -r happy-farmer-v1.2.2.zip \
   index.html legal.html languagecontrol.js \
   css js langdata assets \
   -x '*/.*' '*/.DS_Store' '*Thumbs.db'
@@ -36,7 +36,7 @@ zip -r happy-farmer-v1.2.1.zip \
 校验根目录结构：
 
 ```bash
-unzip -l happy-farmer-v1.2.1.zip | head -20
+unzip -l happy-farmer-v1.2.2.zip | head -20
 ```
 
 全部资源使用相对路径加载，兼容 itch.io iframe 子路径与本地 `file://` 打开。`assets/manifest.js` 已包含 `legal.html` 与 `css/legal.css`，无 `admin.html` 残留。

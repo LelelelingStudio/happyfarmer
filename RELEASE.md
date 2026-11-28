@@ -1,8 +1,8 @@
-# Happy Farmer v1.1.0 — release checklist
+# Happy Farmer v1.2.2 — release checklist
 
 ## 1. Package
 
-Use `happy-farmer-v1.2.1.zip` in this folder.
+Use `happy-farmer-v1.2.2.zip` in this folder.
 
 The ZIP is platform-neutral. `index.html` is at the archive root, so it can be uploaded to any static host or web-game portal that accepts a ZIP or a plain folder. The game uses only relative paths and works in an iframe subpath.
 
@@ -44,7 +44,15 @@ The original in-game gameplay guide has been merged into the EULA. The lelele Ga
 - [x] 4.4 Offline play: core game runs from local files; only the optional leaderboard needs network.
 - [x] 5.x Content rules: no prohibited content, no ads, no third-party feedback scripts.
 
-## 4. What changed in v1.1.0
+## 4. What changed in v1.2.2 (load performance)
+
+- Avatars converted from PNG to WebP (256×256). `assets/images/avatars/` went from ~24 MB to ~1.1 MB; the 180 files are no longer on the critical load path.
+- Loader now releases as soon as the critical path settles; avatar library and BGM metadata warm up in the background.
+- Language data packs load in parallel (26 independent files + `index` last) instead of one-by-one.
+- BGM uses `preload="none"`, so no mp3 competes with the loading screen or blocks `document.readyState`.
+- `tools/dev-server.js` replaces `python3 -m http.server` for local testing (the Python one resets connections under the game's request volume).
+
+## 4.1 What changed in v1.1.0
 
 - English is the default for new players; Chinese remains switchable. Completed i18n coverage adds the consent block, age notice, legal entry labels, avatar errors and second-hand item display.
 - Removed the Tally feedback script.
