@@ -37,13 +37,19 @@ Start with one small plot of land. Dig, plant, water, harvest, process and sell 
 No build or install is needed. Either:
 
 1. Open `index.html` directly in a browser, or
-2. Serve the folder with any static server, for example:
+2. Serve the folder with the bundled dev server:
 
 ```bash
-python3 -m http.server 8765
+node tools/dev-server.js          # http://127.0.0.1:8765/
+node tools/dev-server.js 8080     # custom port
 ```
 
-Then visit `http://localhost:8765/`.
+Then visit `http://127.0.0.1:8765/`.
+
+> Do **not** use `python3 -m http.server` for this project. It accepts only a
+> handful of concurrent connections and resets the rest; the game loads 60+
+> scripts and 190+ images at once, so the loading screen would sit at 0%.
+> If you need a Python server, use a threaded one with a large backlog.
 
 The first launch shows a short loading progress bar, an Ages 6+ notice and the legal consent gate. You must confirm before starting a new game, continuing or importing a save. After confirmation the choice is remembered in `localStorage`.
 

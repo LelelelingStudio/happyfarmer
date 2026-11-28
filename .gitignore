@@ -10,3 +10,6 @@
 /happyfarmer-gamedistribution/
 /happyfarmer-poki/
 /.playwright-cli/
+
+# 原始 PNG 备份（部署与打包都不包含，恢复用）
+/assets-src/
