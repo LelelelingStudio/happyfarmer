@@ -175,11 +175,18 @@
         return tag === 'zh' ? 'ch' : tag;
     }
 
-    /* 按顺序加载指定 locale 的所有数据文件；可多次调用以覆盖（最新一次生效） */
+    /* 按 locale 加载所有数据文件；可多次调用以覆盖（最新一次生效）
+       性能要点：26 个系列文件彼此独立 → 并发注入（async=false 仍按插入顺序执行），
+       只有 index-xx.js 依赖各系列，必须最后单独加载。 */
     async function loadDataPack(locale) {
         const tag = normalizeLocaleKey(locale) || FALLBACK_LANGUAGE;
         const folder = localeFolder(tag);
-        for (const base of DATA_FILES) {
+        const parallelFiles = DATA_FILES.filter((base) => base !== 'index');
+        const tailFiles = DATA_FILES.filter((base) => base === 'index');
+
+        await Promise.all(parallelFiles.map((base) =>
+            loadScriptTag(`langdata/${folder}/${base}-${folder}.js`)));
+        for (const base of tailFiles) {
             await loadScriptTag(`langdata/${folder}/${base}-${folder}.js`);
         }
         window.currentDataLocale = tag;

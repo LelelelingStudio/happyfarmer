@@ -70,8 +70,16 @@ function listByExt(dir, exts) {
 }
 
 const audio = listByExt('assets/audio', ['.mp3', '.ogg', '.wav', '.m4a']);
-const images = listByExt('assets/images', ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg']);
+const allImages = listByExt('assets/images', ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg']);
 const icons = listByExt('assets/icons', ['.png', '.svg', '.jpg', '.webp']);
+
+/* 头像素材库体积大、且只在「头像选择器」里按需出现（loading="lazy"），
+   绝不能放在进入游戏前的关键路径上：单独归到 optional，由 loader 放行后后台预取。 */
+const OPTIONAL_IMAGE_DIRS = ['assets/images/avatars'];
+const isOptionalImage = (p) => OPTIONAL_IMAGE_DIRS.some((d) => p.startsWith(d));
+
+const images = allImages.filter((p) => !isOptionalImage(p)).concat(icons);
+const optionalImages = allImages.filter(isOptionalImage);
 
 const manifest = {
     generatedAt: new Date().toISOString(),
@@ -80,8 +88,14 @@ const manifest = {
     css,
     js,
     langdata,
-    audio,
-    images: images.concat(icons),
+    /* 关键路径：进入游戏前必须真正加载完成的资源 */
+    audio: [],
+    images,
+    /* 可选资源：放行之后再在后台空闲预取，失败不影响进入游戏 */
+    optional: {
+        audio,
+        images: optionalImages,
+    },
 };
 
 const content = `/* ============================================================
@@ -100,4 +114,4 @@ const size = (fs.statSync(OUT).size / 1024).toFixed(1);
 console.log(`✔ assets/manifest.js (${size} KB)`);
 console.log(`  html ${html.length} · css ${css.length} · js ${js.length} · ` +
     `langdata ${Object.values(langdata).reduce((n, a) => n + a.length, 0)} · ` +
-    `audio ${audio.length} · images ${manifest.images.length}`);
+    `audio ${audio.length} · images ${images.length} · optional-images ${optionalImages.length}`);

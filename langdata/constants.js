@@ -4,7 +4,7 @@
    ============================================================ */
 
 /* -------- 版本 / 存档 -------- */
-const GAME_VERSION = '1.1.0';   /* 英文优先 + 法律同意 + 存档迁移 + 加载体验优化 */
+const GAME_VERSION = '1.2.2';   /* 加载性能：头像 WebP + 关键路径先行放行 */
 const SAVE_VERSION = '1.1.0';
 const SAVE_KEY = 'farm_game_save_v1';
 const SAVE_INTERVAL_MS = 30000;
@@ -269,15 +269,20 @@ const FORCE_START_SCREEN_KEY = 'farm_force_start_screen';
    头像
    ------------------------------------------------------------
    头像在存档里只存一个「短标记」，不存 base64：
-     - 素材库头像：'12.png'   → assets/images/avatars/12.png
+     - 素材库头像：'12.png'   → assets/images/avatars/12.webp（文件）
      - emoji 头像：'🐱'
      - 自定义上传：data:image/... （只有玩家自己上传图片时才会用到）
+
+   存档标记固定用 .png（跨客户端 / 排行榜服务端都按这个约定），
+   实际文件是 .webp（256×256，体积约为原 PNG 的 4%），
+   由 getAvatarImageSrc() 等函数在显示时换成真实文件后缀。
    ============================================================ */
 
-/* 素材库目录：把 1.png ~ 30.png 放进这里即可，不需要改代码 */
-const AVATAR_LIBRARY_DIR   = 'assets/images/avatars/';
-const AVATAR_LIBRARY_COUNT = 180;
-const AVATAR_LIBRARY_EXT   = '.png';
+/* 素材库目录：把 1.webp ~ 180.webp 放进这里即可，不需要改代码 */
+const AVATAR_LIBRARY_DIR      = 'assets/images/avatars/';
+const AVATAR_LIBRARY_COUNT    = 180;
+const AVATAR_LIBRARY_EXT      = '.png';    /* 存档/排行榜标记后缀，不要改 */
+const AVATAR_LIBRARY_FILE_EXT = '.webp';   /* 磁盘上的真实文件后缀 */
 
 /* 内置 emoji 头像存放前缀：存档里只记 'e3' 这样的序号，不存 emoji 字符本身 */
 const AVATAR_EMOJI_PREFIX = 'e';

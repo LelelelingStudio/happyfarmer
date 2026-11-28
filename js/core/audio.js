@@ -36,7 +36,10 @@ const audio = {
         /* 创建 BGM 播放器（重复 init 不重建，避免打断正在播放的音乐） */
         if (!this._bgmEl) {
             this._bgmEl = new Audio();
-            this._bgmEl.preload = 'auto';
+            /* 关键：不要让 1.4MB 的 mp3 在加载页阶段就抢带宽、拖住 document.readyState。
+               真正播放（_playBgmAt 设置 src / play）时才下载。
+               这里用 'none' —— 只在用户点开始、解锁音频后才取数据。 */
+            this._bgmEl.preload = 'none';
             this._bgmEl.volume = 0;
             this._bgmEl.muted = false;
             /* 注意：绝对不要设置 crossOrigin='anonymous'。

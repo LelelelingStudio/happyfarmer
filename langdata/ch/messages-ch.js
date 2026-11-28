@@ -209,6 +209,7 @@ Object.assign(MESSAGES_CH, {
         errorScripts: "游戏脚本加载失败，请检查网络后重试。",
         errorData: "语言数据加载失败，请重试。",
         partialWarning: "少量可选资源未能加载，游戏仍将继续。",
+        degradedNotice: "仍在后台加载，先进入游戏。",
     },
     notifications: {
         audioBlockedTitle: "声音已就绪",

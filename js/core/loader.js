@@ -1,24 +1,24 @@
 /* ============================================================
    loader.js  —  资源加载进度（manifest 驱动）
    ------------------------------------------------------------
-   核心原则：
-   - 只有所有资源都「真正结束」（加载成功 / 明确报错 / 单项超时判失败）
-     之后，进度条才会走到 100% 并放行。
-   - 任何兜底超时都不会伪装成「加载成功」：超时一律记为失败并记录。
-   - 关键资源（脚本 / 语言数据）失败时停留在加载页并显示重试按钮，
-     绝不带着半加载状态进入游戏。
+   加载策略（v1.2.2 起）：
+   - 「关键路径」= html / css / js / langdata / 关键图 / readyState，
+     这些真正结束后进度条才走 100% 并放行进入游戏。
+   - 「可选资源」= 头像素材库、BGM 元数据等。放行之后在后台空闲预取，
+     失败只记录，不影响进入游戏，也不会拖住进度条。
+   - 关键资源失败时停留在加载页并显示重试按钮，绝不带半加载状态进入游戏。
+   - 关键路径总等待有上限（LOADER_CRITICAL_CAP_MS）：极端慢网下先放行，
+     明确标记 degraded，剩余资源继续在后台加载（不伪装成「全部成功」）。
    权重（总和 100%）：
-     html 3% · css 7% · js 12% · langdata 18%
-     音频 20% · 图片 30% · 其他 10%
+     html 5% · css 10% · js 20% · langdata 40% · images 15% · other 10%
    ============================================================ */
 
 const LOADER_WEIGHTS = {
-    html:     3,
-    css:      7,
-    js:       12,
-    langdata: 18,
-    audio:    20,
-    images:   30,
+    html:     5,
+    css:      10,
+    js:       20,
+    langdata: 40,
+    images:   15,
     other:    10,
 };
 
@@ -27,27 +27,32 @@ const LOADER_STAGE_LABEL = {
     css:      'loader.stageCss',
     js:       'loader.stageJs',
     langdata: 'loader.stageLangdata',
-    audio:    'loader.stageAudio',
     images:   'loader.stageImages',
     other:    'loader.stageOther',
 };
 
-const LOADER_IMAGE_CONCURRENCY = 12;     /* 本地图片并发预取（提高以缩短首屏等待） */
-const LOADER_MIN_VISIBLE_MS = 900;       /* 进度条至少可见时间，避免一闪而过 */
-const LOADER_SCRIPT_TIMEOUT_MS = 15000;  /* CSS / 主脚本等待上限 */
-const LOADER_DATA_TIMEOUT_MS = 15000;    /* 语言数据等待上限 */
-const LOADER_AUDIO_TIMEOUT_MS = 10000;   /* 单个音频元数据等待上限 */
-const LOADER_IMAGE_TIMEOUT_MS = 15000;   /* 单张图片等待上限 */
-const LOADER_READY_TIMEOUT_MS = 10000;   /* document.readyState 等待上限 */
+const LOADER_IMAGE_CONCURRENCY = 8;       /* 关键图预取并发 */
+const LOADER_BG_CONCURRENCY = 6;          /* 可选资源后台预取并发 */
+const LOADER_BG_DELAY_MS = 1200;          /* 放行后延迟，先把开始界面铺出来 */
+const LOADER_MIN_VISIBLE_MS = 900;        /* 进度条至少可见时间，避免一闪而过 */
+const LOADER_SCRIPT_TIMEOUT_MS = 15000;   /* CSS / 主脚本等待上限 */
+const LOADER_DATA_TIMEOUT_MS = 12000;     /* 语言数据等待上限 */
+const LOADER_AUDIO_TIMEOUT_MS = 12000;    /* 单个音频元数据等待上限（后台用） */
+const LOADER_IMAGE_TIMEOUT_MS = 12000;    /* 单张图片等待上限 */
+const LOADER_READY_TIMEOUT_MS = 8000;     /* document.readyState 等待上限 */
+const LOADER_CRITICAL_CAP_MS = 12000;     /* 关键路径总等待上限（兜底放行） */
 
 /* 对外可观测状态：浏览器控制台可直接查看 window.__assetLoad */
 window.__assetLoad = {
     settled: false,
     ok: false,
+    degraded: false,
     stage: 'html',
-    total: 7,
+    total: 6,
     done: 0,
     failed: [],
+    optionalFailed: [],
+    background: { total: 0, done: 0, started: false, finished: false },
     startedAt: 0,
     finishedAt: 0,
 };
@@ -347,6 +352,58 @@ function forceFinishLoading() {
     console.warn('[loader] forceFinishLoading() is deprecated; real completion is required before release');
 }
 
+/* -------- 可选资源：放行后后台空闲预取 -------- */
+
+let _bgStarted = false;
+
+/**
+ * 头像素材库（180 张）和 BGM 元数据都不在关键路径上：
+ * 开始界面先出来，这些在后台慢慢补，失败只记录不阻断。
+ */
+function _scheduleBackgroundPrefetch() {
+    if (_bgStarted) return;
+    _bgStarted = true;
+
+    const manifest = (typeof ASSET_MANIFEST !== 'undefined' && ASSET_MANIFEST) ? ASSET_MANIFEST : null;
+    const bg = window.__assetLoad.background;
+    const optional = (manifest && manifest.optional) || {};
+    const images = [...(optional.images || [])];
+    const audios = [...(optional.audio || [])];
+    bg.total = images.length + audios.length;
+
+    if (!bg.total) {
+        bg.finished = true;
+        return;
+    }
+
+    const run = () => {
+        bg.started = true;
+        const track = (loader) => (item) => loader(item).then((result) => {
+            bg.done++;
+            if (!result || !result.ok) {
+                window.__assetLoad.optionalFailed.push({ item, reason: (result && result.reason) || 'error' });
+            }
+            return result;
+        });
+        _loadPool(images, track(_preloadImage), LOADER_BG_CONCURRENCY)
+            .then(() => _loadPool(audios, track(_preloadAudioMeta), 2))
+            .then(() => {
+                bg.finished = true;
+                const failed = window.__assetLoad.optionalFailed.length;
+                console.log(`[loader] background prefetch done: ${bg.done}/${bg.total} (failed ${failed})`);
+            })
+            .catch((e) => {
+                bg.finished = true;
+                console.warn('[loader] background prefetch error:', e && e.message);
+            });
+    };
+
+    setTimeout(() => {
+        if (typeof requestIdleCallback === 'function') requestIdleCallback(run, { timeout: 3000 });
+        else run();
+    }, LOADER_BG_DELAY_MS);
+}
+
 async function runAssetLoading() {
     if (_loaderRunning) return _loaderRunning;
 
@@ -355,6 +412,29 @@ async function runAssetLoading() {
         const startedAt = Date.now();
         state.startedAt = startedAt;
         state.failed.length = 0;
+
+        /* 关键路径总等待兜底：极端慢网（移动数据 / 弱信号）下，
+           脚本已经就位时先放行，明确标记 degraded，剩余资源后台继续。 */
+        const capTimer = setTimeout(() => {
+            if (_loaderReleased) return;
+            const scriptsReady = typeof window.bootstrap === 'function' && !!window.__dataReadyPromise;
+            if (!scriptsReady) return;   /* 连脚本都没到，强行放行没有意义 */
+            state.degraded = true;
+            state.settled = true;
+            state.ok = false;
+            state.finishedAt = Date.now();
+            _loaderSetProgress(100, 'other');
+            const { status } = _loaderEls();
+            if (status && !status.dataset.loaderError) {
+                status.textContent = _loaderText(
+                    'loader.degradedNotice',
+                    'Still loading in background — entering the game.'
+                );
+            }
+            console.warn('[loader] critical wait exceeded cap; releasing in degraded mode');
+            releaseLoader();
+            _scheduleBackgroundPrefetch();
+        }, LOADER_CRITICAL_CAP_MS);
 
         const manifest = (typeof ASSET_MANIFEST !== 'undefined' && ASSET_MANIFEST) ? ASSET_MANIFEST : null;
         let progress = 0;
@@ -369,6 +449,7 @@ async function runAssetLoading() {
             console.warn('[loader] asset failed:', type, item, reason);
         };
         const abort = (message) => {
+            clearTimeout(capTimer);
             state.settled = true;
             state.ok = false;
             state.finishedAt = Date.now();
@@ -432,23 +513,7 @@ async function runAssetLoading() {
         add(LOADER_WEIGHTS.langdata, 1, 'langdata');
         await _loaderSleep(30);
 
-        /* --- 5. 音频元数据（不播放、不整首下载），每个都等真正 settle --- */
-        const audioList = manifest.audio || [];
-        if (audioList.length > 0) {
-            const audioResult = await _loadPool(
-                audioList,
-                (src) => _preloadAudioMeta(src),
-                2,
-                (total, done) => _loaderSetProgress(progress + LOADER_WEIGHTS.audio * (done / total), 'audio')
-            );
-            audioResult.failed.forEach((f) => noteFailed('audio', f.item, f.reason));
-            add(LOADER_WEIGHTS.audio, audioResult.done / audioResult.total, 'audio');
-        } else {
-            add(LOADER_WEIGHTS.audio, 1, 'audio');
-        }
-        await _loaderSleep(30);
-
-        /* --- 6. 图片：全部预取完成后才继续，不再 6 秒 race 后直接加满 --- */
+        /* --- 5. 关键图片（manifest.images，当前一般只有图标，头像已归入 optional） --- */
         const imageList = [...(manifest.images || [])];
         if (imageList.length > 0) {
             const imageResult = await _loadPool(
@@ -463,7 +528,7 @@ async function runAssetLoading() {
             add(LOADER_WEIGHTS.images, 1, 'images');
         }
 
-        /* --- 7. 其他（字体 / 图标 / 页面 onload） --- */
+        /* --- 6. 其他（字体 / 图标 / 页面 onload） --- */
         const pageResult = await _waitSettled(
             () => document.readyState === 'complete',
             LOADER_READY_TIMEOUT_MS
@@ -476,7 +541,7 @@ async function runAssetLoading() {
             await _loaderSleep(LOADER_MIN_VISIBLE_MS - elapsed);
         }
 
-        /* 到这里所有阶段都已 settle，才允许 100% 与放行 */
+        /* 关键路径全部 settle，允许 100% 与放行 */
         progress = 100;
         _loaderSetProgress(100, 'other');
         state.settled = true;
@@ -488,14 +553,17 @@ async function runAssetLoading() {
             if (status) {
                 status.textContent = _loaderText(
                     'loader.partialWarning',
-                    'Some optional assets failed to load; continuing anyway.'
+                    'Some critical assets failed to load; continuing anyway.'
                 );
             }
-            console.warn(`[loader] ${state.failed.length} optional asset(s) failed; see window.__assetLoad.failed`);
+            console.warn(`[loader] ${state.failed.length} critical asset(s) failed; see window.__assetLoad.failed`);
         }
 
-        console.log(`[loader] all assets settled in ${((state.finishedAt - startedAt) / 1000).toFixed(2)}s (ok=${state.ok})`);
+        clearTimeout(capTimer);
+        console.log(`[loader] critical assets settled in ${((state.finishedAt - startedAt) / 1000).toFixed(2)}s (ok=${state.ok})`);
         releaseLoader();
+        /* 放行后再空闲预取头像 / BGM：不影响进入游戏，失败也不阻断 */
+        _scheduleBackgroundPrefetch();
         return { ok: state.ok, failed: state.failed.slice() };
     })();
 

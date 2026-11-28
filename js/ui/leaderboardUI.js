@@ -135,8 +135,11 @@ function renderLeaderboardList(page) {
 function lbAvatarHtml(avatar) {
     if (!avatar) return '<span class="lb-avatar-blank">—</span>';
     const raw = String(avatar);
-    if (/^\d+\.png$/i.test(raw)) {
-        return `<img src="${escapeHtml(AVATAR_LIBRARY_DIR + raw)}" alt="" onerror="this.style.display='none';if(this.parentNode){this.parentNode.textContent='—';}">`;
+    if (/^\d+\.(png|webp)$/i.test(raw)) {
+        const src = (typeof getAvatarLibrarySrc === 'function')
+            ? getAvatarLibrarySrc(raw)
+            : AVATAR_LIBRARY_DIR + raw;
+        return `<img src="${escapeHtml(src)}" alt="" onerror="this.style.display='none';if(this.parentNode){this.parentNode.textContent='—';}">`;
     }
     let emoji = raw;
     if (typeof isAvatarEmojiToken === 'function' && isAvatarEmojiToken(raw)) {

@@ -6,7 +6,7 @@
 const DOCUMENTS_EN = {
     "eula": {
         "title": "User Agreement",
-        "version": "1.1.0",
+        "version": "1.2.2",
         "updated": "2026-11-22",
         "content": `# Happy Farmer · User Agreement
 
@@ -95,7 +95,7 @@ For questions, use the contact channels published on the game's release page.
     },
     "privacy": {
         "title": "Privacy Policy",
-        "version": "1.1.0",
+        "version": "1.2.2",
         "updated": "2026-11-22",
         "content": `# Happy Farmer · Privacy Policy
 
@@ -167,7 +167,7 @@ For privacy questions, use the contact channels published on the game's release 
     },
     "terms": {
         "title": "Terms of Service",
-        "version": "1.1.0",
+        "version": "1.2.2",
         "updated": "2026-11-22",
         "content": `# Happy Farmer · Terms of Service
 

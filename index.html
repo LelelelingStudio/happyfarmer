@@ -13,26 +13,26 @@
     </script>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%B1%3C/text%3E%3C/svg%3E">
 
-    <link rel="stylesheet" href="css/reset.css?v=1.1.0">
-    <link rel="stylesheet" href="css/variables.css?v=1.1.0">
-    <link rel="stylesheet" href="css/layout.css?v=1.1.0">
-    <link rel="stylesheet" href="css/components.css?v=1.1.0">
-    <link rel="stylesheet" href="css/farm.css?v=1.1.0">
-    <link rel="stylesheet" href="css/shop.css?v=1.1.0">
-    <link rel="stylesheet" href="css/factory.css?v=1.1.0">
-    <link rel="stylesheet" href="css/merchant.css?v=1.1.0">
-    <link rel="stylesheet" href="css/modal.css?v=1.1.0">
-    <link rel="stylesheet" href="css/ticker.css?v=1.1.0">
-    <link rel="stylesheet" href="css/settings.css?v=1.1.0">
-    <link rel="stylesheet" href="css/effects.css?v=1.1.0">
-    <link rel="stylesheet" href="css/drawer.css?v=1.1.0">
-    <link rel="stylesheet" href="css/mall.css?v=1.1.0">
-    <link rel="stylesheet" href="css/market.css?v=1.1.0">
-    <link rel="stylesheet" href="css/collection.css?v=1.1.0">
-    <link rel="stylesheet" href="css/tillgame.css?v=1.1.0">
-    <link rel="stylesheet" href="css/mobile.css?v=1.1.0">
-    <link rel="stylesheet" href="css/main.css?v=1.1.0">
-    <link rel="stylesheet" href="css/farmerGuide.css?v=1.1.0">
+    <link rel="stylesheet" href="css/reset.css?v=1.2.2">
+    <link rel="stylesheet" href="css/variables.css?v=1.2.2">
+    <link rel="stylesheet" href="css/layout.css?v=1.2.2">
+    <link rel="stylesheet" href="css/components.css?v=1.2.2">
+    <link rel="stylesheet" href="css/farm.css?v=1.2.2">
+    <link rel="stylesheet" href="css/shop.css?v=1.2.2">
+    <link rel="stylesheet" href="css/factory.css?v=1.2.2">
+    <link rel="stylesheet" href="css/merchant.css?v=1.2.2">
+    <link rel="stylesheet" href="css/modal.css?v=1.2.2">
+    <link rel="stylesheet" href="css/ticker.css?v=1.2.2">
+    <link rel="stylesheet" href="css/settings.css?v=1.2.2">
+    <link rel="stylesheet" href="css/effects.css?v=1.2.2">
+    <link rel="stylesheet" href="css/drawer.css?v=1.2.2">
+    <link rel="stylesheet" href="css/mall.css?v=1.2.2">
+    <link rel="stylesheet" href="css/market.css?v=1.2.2">
+    <link rel="stylesheet" href="css/collection.css?v=1.2.2">
+    <link rel="stylesheet" href="css/tillgame.css?v=1.2.2">
+    <link rel="stylesheet" href="css/mobile.css?v=1.2.2">
+    <link rel="stylesheet" href="css/main.css?v=1.2.2">
+    <link rel="stylesheet" href="css/farmerGuide.css?v=1.2.2">
 
 </head>
 <body>
@@ -62,7 +62,7 @@
         <div class="loading-progress-scale"><span>0%</span><span>50%</span><span>100%</span></div>
     </div>
     <div id="loading-percent" class="loading-percent">0.0%</div>
-    <div class="loading-version">v1.1.0</div>
+    <div class="loading-version">v1.2.2</div>
 </div>
 
 <!-- 切换语言时的过渡遮罩（刷新后自动续玩，不再回到开始页） -->
@@ -525,86 +525,86 @@ document.documentElement.classList.add('js-loaded');
 <!-- ============================================================ -->
 
 <!-- 1. UI 语言包（两个都常驻，t() 会按当前 locale 选包）-->
-<script src="langdata/ch/ui-ch.js?v=1.1.0"></script>
-<script src="langdata/en/ui-en.js?v=1.1.0"></script>
-<script src="langdata/ch/messages-ch.js?v=1.1.0"></script>
-<script src="langdata/en/messages-en.js?v=1.1.0"></script>
+<script src="langdata/ch/ui-ch.js?v=1.2.2"></script>
+<script src="langdata/en/ui-en.js?v=1.2.2"></script>
+<script src="langdata/ch/messages-ch.js?v=1.2.2"></script>
+<script src="langdata/en/messages-en.js?v=1.2.2"></script>
 
 <!-- 1.5 语言无关常量（必须在 state.js 之前同步加载；不然 gameState 初始化时 INITIAL_GOLD 等会 TDZ） -->
-<script src="langdata/constants.js?v=1.1.0"></script>
+<script src="langdata/constants.js?v=1.2.2"></script>
 
 <!-- 资源清单（由 tools/build-manifest.js 生成） -->
-<script src="assets/manifest.js?v=1.1.0"></script>
+<script src="assets/manifest.js?v=1.2.2"></script>
 
 <!-- 1.6 法定文档（规则 / 隐私政策 / 服务条款）：两个语言都常驻，JS 内联形式保证 file:// 与离线可用 -->
-<script src="langdata/ch/documents-ch.js?v=1.1.0"></script>
-<script src="langdata/en/documents-en.js?v=1.1.0"></script>
+<script src="langdata/ch/documents-ch.js?v=1.2.2"></script>
+<script src="langdata/en/documents-en.js?v=1.2.2"></script>
 
 <!-- 2. 核心层 -->
-<script src="js/core/safeStorage.js?v=1.1.0"></script>
-<script src="js/core/utils.js?v=1.1.0"></script>
-<script src="js/core/eventBus.js?v=1.1.0"></script>
-<script src="js/core/state.js?v=1.1.0"></script>
-<script src="js/core/modal.js?v=1.1.0"></script>
-<script src="js/core/saveCodec.js?v=1.1.0"></script>
-<script src="js/core/save.js?v=1.1.0"></script>
-<script src="js/core/audio.js?v=1.1.0"></script>
-<script src="js/core/notify.js?v=1.1.0"></script>
-<script src="js/core/layout.js?v=1.1.0"></script>
+<script src="js/core/safeStorage.js?v=1.2.2"></script>
+<script src="js/core/utils.js?v=1.2.2"></script>
+<script src="js/core/eventBus.js?v=1.2.2"></script>
+<script src="js/core/state.js?v=1.2.2"></script>
+<script src="js/core/modal.js?v=1.2.2"></script>
+<script src="js/core/saveCodec.js?v=1.2.2"></script>
+<script src="js/core/save.js?v=1.2.2"></script>
+<script src="js/core/audio.js?v=1.2.2"></script>
+<script src="js/core/notify.js?v=1.2.2"></script>
+<script src="js/core/layout.js?v=1.2.2"></script>
 
 <!-- 3. 系统层 -->
-<script src="js/systems/weatherSystem.js?v=1.1.0"></script>
-<script src="js/systems/currencySystem.js?v=1.1.0"></script>
-<script src="js/systems/economySystem.js?v=1.1.0"></script>
-<script src="js/systems/farmSystem.js?v=1.1.0"></script>
-        <script src="js/systems/factoryData.js?v=1.1.0"></script>
-        <script src="js/systems/factorySystem.js?v=1.1.0"></script>
-<script src="js/systems/itemEffectSystem.js?v=1.1.0"></script>
-<script src="js/systems/mallLimits.js?v=1.1.0"></script>
-<script src="js/systems/tradeSystem.js?v=1.1.0"></script>
-<script src="js/systems/leaderboardSystem.js?v=1.1.0"></script>
-<script src="js/systems/avatarSystem.js?v=1.1.0"></script>
-<script src="js/systems/merchantSystem.js?v=1.1.0"></script>
-<script src="js/systems/consignmentSystem.js?v=1.1.0"></script>
-<script src="js/systems/auctionSystem.js?v=1.1.0"></script>
-<script src="js/systems/achievementSystem.js?v=1.1.0"></script>
-<script src="js/systems/questSystem.js?v=1.1.0"></script>
-<script src="js/systems/eventSystem.js?v=1.1.0"></script>
-<script src="js/systems/skinSystem.js?v=1.1.0"></script>
+<script src="js/systems/weatherSystem.js?v=1.2.2"></script>
+<script src="js/systems/currencySystem.js?v=1.2.2"></script>
+<script src="js/systems/economySystem.js?v=1.2.2"></script>
+<script src="js/systems/farmSystem.js?v=1.2.2"></script>
+        <script src="js/systems/factoryData.js?v=1.2.2"></script>
+        <script src="js/systems/factorySystem.js?v=1.2.2"></script>
+<script src="js/systems/itemEffectSystem.js?v=1.2.2"></script>
+<script src="js/systems/mallLimits.js?v=1.2.2"></script>
+<script src="js/systems/tradeSystem.js?v=1.2.2"></script>
+<script src="js/systems/leaderboardSystem.js?v=1.2.2"></script>
+<script src="js/systems/avatarSystem.js?v=1.2.2"></script>
+<script src="js/systems/merchantSystem.js?v=1.2.2"></script>
+<script src="js/systems/consignmentSystem.js?v=1.2.2"></script>
+<script src="js/systems/auctionSystem.js?v=1.2.2"></script>
+<script src="js/systems/achievementSystem.js?v=1.2.2"></script>
+<script src="js/systems/questSystem.js?v=1.2.2"></script>
+<script src="js/systems/eventSystem.js?v=1.2.2"></script>
+<script src="js/systems/skinSystem.js?v=1.2.2"></script>
 
 <!-- 4. UI 层 -->
-<script src="js/ui/notification.js?v=1.1.0"></script>
-<script src="js/ui/ticker.js?v=1.1.0"></script>
-<script src="js/ui/effects.js?v=1.1.0"></script>
-<script src="js/ui/logUI.js?v=1.1.0"></script>
-<script src="js/ui/hudUI.js?v=1.1.0"></script>
-<script src="js/ui/farmUI.js?v=1.1.0"></script>
-<script src="js/ui/shopUI.js?v=1.1.0"></script>
-<script src="js/ui/inventoryUI.js?v=1.1.0"></script>
-<script src="js/ui/factoryUI.js?v=1.1.0"></script>
-<script src="js/ui/merchantUI.js?v=1.1.0"></script>
-<script src="js/ui/mallUI.js?v=1.1.0"></script>
-<script src="js/ui/tradeUI.js?v=1.1.0"></script>
-<script src="js/ui/leaderboardUI.js?v=1.1.0"></script>
-<script src="js/ui/skinUI.js?v=1.1.0"></script>
-<script src="js/ui/consignmentUI.js?v=1.1.0"></script>
-<script src="js/ui/auctionUI.js?v=1.1.0"></script>
-<script src="js/ui/achievementUI.js?v=1.1.0"></script>
-<script src="js/ui/settingsUI.js?v=1.1.0"></script>
-<script src="js/ui/ui.js?v=1.1.0"></script>
+<script src="js/ui/notification.js?v=1.2.2"></script>
+<script src="js/ui/ticker.js?v=1.2.2"></script>
+<script src="js/ui/effects.js?v=1.2.2"></script>
+<script src="js/ui/logUI.js?v=1.2.2"></script>
+<script src="js/ui/hudUI.js?v=1.2.2"></script>
+<script src="js/ui/farmUI.js?v=1.2.2"></script>
+<script src="js/ui/shopUI.js?v=1.2.2"></script>
+<script src="js/ui/inventoryUI.js?v=1.2.2"></script>
+<script src="js/ui/factoryUI.js?v=1.2.2"></script>
+<script src="js/ui/merchantUI.js?v=1.2.2"></script>
+<script src="js/ui/mallUI.js?v=1.2.2"></script>
+<script src="js/ui/tradeUI.js?v=1.2.2"></script>
+<script src="js/ui/leaderboardUI.js?v=1.2.2"></script>
+<script src="js/ui/skinUI.js?v=1.2.2"></script>
+<script src="js/ui/consignmentUI.js?v=1.2.2"></script>
+<script src="js/ui/auctionUI.js?v=1.2.2"></script>
+<script src="js/ui/achievementUI.js?v=1.2.2"></script>
+<script src="js/ui/settingsUI.js?v=1.2.2"></script>
+<script src="js/ui/ui.js?v=1.2.2"></script>
 
 <!-- 5. 语言控制 + 数据动态加载（languagecontrol.js 启动后立即异步按 locale 加载数据文件并暴露 __dataReadyPromise）-->
-<script src="languagecontrol.js?v=1.1.0"></script>
+<script src="languagecontrol.js?v=1.2.2"></script>
 
 <!-- 5.5 按钮右键提示 / 货币弹窗 / 隐私与条款弹窗（独立模块）-->
-<script src="js/ui/rightClickTip.js?v=1.1.0"></script>
-<script src="js/ui/currencyDialog.js?v=1.1.0"></script>
-<script src="js/ui/legalConsent.js?v=1.1.0"></script>
-<script src="js/ui/legalDialog.js?v=1.1.0"></script>
-<script src="js/ui/farmerGuide.js?v=1.1.0"></script>
+<script src="js/ui/rightClickTip.js?v=1.2.2"></script>
+<script src="js/ui/currencyDialog.js?v=1.2.2"></script>
+<script src="js/ui/legalConsent.js?v=1.2.2"></script>
+<script src="js/ui/legalDialog.js?v=1.2.2"></script>
+<script src="js/ui/farmerGuide.js?v=1.2.2"></script>
 
 <!-- 6. 入口（main.js bootstrap 会 await __dataReadyPromise）-->
-<script src="js/core/loader.js?v=1.1.0"></script>
-<script src="js/main.js?v=1.1.0"></script>
+<script src="js/core/loader.js?v=1.2.2"></script>
+<script src="js/main.js?v=1.2.2"></script>
 </body>
 </html>

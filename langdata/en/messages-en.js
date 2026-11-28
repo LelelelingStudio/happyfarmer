@@ -210,6 +210,7 @@ Object.assign(MESSAGES_EN, {
         errorScripts: "Game scripts failed to load. Check your connection, then retry.",
         errorData: "Language data failed to load. Please retry.",
         partialWarning: "A few optional assets failed to load — the game will continue.",
+        degradedNotice: "Still loading in background — entering the game.",
     },
     notifications: {
         audioBlockedTitle: "Audio ready",

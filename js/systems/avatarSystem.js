@@ -2,17 +2,29 @@
    avatarSystem.js  —  头像（素材库 / emoji / 自定义上传）
    ------------------------------------------------------------
    存档里只保存「短标记」，不保存 base64：
-     '12.png'            → assets/images/avatars/12.png（素材库）
+     '12.png'            → assets/images/avatars/12.webp（素材库，标记后缀固定 .png）
      '🐱'                → emoji 头像
      'data:image/...'    → 玩家自己上传的图片（唯一需要 base64 的情况）
-   素材库图片由玩家放进 assets/images/avatars/1.png ~ 30.png，
+   素材库图片由玩家放进 assets/images/avatars/1.webp ~ 180.webp，
    代码不需要任何修改；文件缺失时会显示占位编号，不会出现裂图。
    ============================================================ */
 
 /* -------- 判定 -------- */
 
 function isAvatarLibraryToken(avatar) {
-    return /^\d+\.png$/i.test(String(avatar || ''));
+    /* 标记统一按 .png 存，但历史/兼容情况下也接受 .webp 写法 */
+    return /^\d+\.(png|webp)$/i.test(String(avatar || ''));
+}
+
+/**
+ * 素材库标记（'12.png' / '12.webp' / 12）→ 磁盘上真实文件路径
+ * 存档标记后缀与文件后缀解耦，换图片格式不影响旧存档。
+ */
+function getAvatarLibrarySrc(token) {
+    const raw = String(token == null ? '' : token);
+    const num = raw.replace(/\.[a-z]+$/i, '');
+    if (!/^\d+$/.test(num)) return '';
+    return AVATAR_LIBRARY_DIR + num + AVATAR_LIBRARY_FILE_EXT;
 }
 
 function isAvatarDataUrl(avatar) {
@@ -61,7 +73,7 @@ function isAvatarEmoji(avatar) {
 
 /** 需要 <img> 时返回图片地址，emoji 头像返回空串 */
 function getAvatarImageSrc(avatar) {
-    if (isAvatarLibraryToken(avatar)) return AVATAR_LIBRARY_DIR + avatar;
+    if (isAvatarLibraryToken(avatar)) return getAvatarLibrarySrc(avatar);
     if (isAvatarDataUrl(avatar)) return avatar;
     return '';
 }
@@ -196,7 +208,7 @@ function renderAvatarDialogBody() {
         /* 已知缺失的图片不再发请求，直接显示编号占位 */
         const imgTag = isMissing
             ? ''
-            : `<img class="avatar-lib-img" src="${AVATAR_LIBRARY_DIR}${token}" alt="${token}" loading="lazy" decoding="async">`;
+            : `<img class="avatar-lib-img" src="${getAvatarLibrarySrc(i)}" alt="${token}" loading="lazy" decoding="async">`;
         libraryTiles += `
             <button type="button" class="avatar-choice avatar-lib-item ${current === token ? 'active' : ''} ${isMissing ? 'missing' : ''}" data-avatar="${token}" title="${token}">
                 ${imgTag}
